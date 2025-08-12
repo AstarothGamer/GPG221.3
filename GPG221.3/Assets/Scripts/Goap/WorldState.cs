@@ -1,13 +1,15 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class WorldState : MonoBehaviour
+namespace Goap
 {
-    public List<Effect> receivedEffects;
-
-    void Start()
+    public class WorldState : MonoBehaviour
     {
-        receivedEffects.Add(new Effect { name = "Sleeping" });
+        public List<Effect> receivedEffects;
+
+        void Start()
+        {
+            receivedEffects.Add(new Effect { name = "Sleeping" });
+        }
     }
 }

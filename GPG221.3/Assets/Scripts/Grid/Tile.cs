@@ -1,3 +1,4 @@
+using NPC;
 using UnityEngine;
 
 public class Tile : MonoBehaviour

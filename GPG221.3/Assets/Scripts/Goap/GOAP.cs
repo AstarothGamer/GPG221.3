@@ -2,189 +2,192 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class GOAP : MonoBehaviour
+namespace Goap
 {
-    public WorldState worldState;
-    public List<Action> actions;
-
-    public List<Action> finalPlan;
-    public List<Action> possibleActions;
-    public List<Action> plan;
-    public List<Action> failedActions = new();
-
-    [SerializeField] public string Goal;
-
-    void Start()
+    public class GOAP : MonoBehaviour
     {
-        actions = new List<Action>(GetComponents<Action>());
-        CheckingActions();
-    }
+        public WorldState worldState;
+        public List<Action> actions;
 
-    public void CheckingActions()
-    {
-        possibleActions.Clear();
-        for (int i = 0; i < actions.Count; i++)
+        public List<Action> finalPlan;
+        public List<Action> possibleActions;
+        public List<Action> plan;
+        public List<Action> failedActions = new();
+
+        [SerializeField] public string Goal;
+
+        void Start()
         {
-            for (int e = 0; e < actions[i].effects.Count; e++)
+            actions = new List<Action>(GetComponents<Action>());
+            CheckingActions();
+        }
+
+        public void CheckingActions()
+        {
+            possibleActions.Clear();
+            for (int i = 0; i < actions.Count; i++)
             {
-                if (actions[i].effects[e].name == Goal)
+                for (int e = 0; e < actions[i].effects.Count; e++)
                 {
-                    if (!possibleActions.Contains(actions[i]))
+                    if (actions[i].effects[e].name == Goal)
                     {
-                        possibleActions.Add(actions[i]);
+                        if (!possibleActions.Contains(actions[i]))
+                        {
+                            possibleActions.Add(actions[i]);
+                            break;
+                        }
+                    }
+                }
+            }
+            FinalPlan();
+        }
+
+        public void FinalPlan()
+        {
+            finalPlan.Clear();
+            int bestLength = int.MaxValue;
+            List<Action> bestPath = new();
+
+            for (int i = 0; i < possibleActions.Count; i++)
+            {
+                if (failedActions.Contains(possibleActions[i]))
+                {
+                    continue;
+                }
+
+                List<string> visited = new();
+                List<Action> currentPath = new();
+
+                if (PlanPath(possibleActions[i], currentPath, visited))
+                {
+                    if (currentPath.Count < bestLength)
+                    {
+                        bestLength = currentPath.Count;
+                        bestPath = currentPath;
+                    }
+                }
+            }
+
+            if (bestPath != null)
+            {
+                finalPlan = bestPath;
+                Debug.Log("final plan:");
+
+                for (int i = 0; i < finalPlan.Count; i++)
+                {
+                    Debug.Log(finalPlan[i].actionName);
+                }
+
+                StartCoroutine(ExecutePlanCoroutine());
+            }
+            else
+            {
+                Debug.LogError("Goal can not be achieved");
+            }
+        }
+
+        public bool PlanPath(Action goapAction, List<Action> path, List<string> visited)
+        {
+            for (int i = 0; i < goapAction.prerequisits.Count; i++)
+            {
+                for (int j = 0; j < visited.Count; j++)
+                {
+                    if (visited[j] == goapAction.prerequisits[i].name)
+                    {
+                        return false;
+                    }
+                }
+
+                bool hasEffect = false;
+                for (int j = 0; j < worldState.receivedEffects.Count; j++)
+                {
+                    if (goapAction.prerequisits[i].name == worldState.receivedEffects[j].name)
+                    {
+                        hasEffect = true;
                         break;
                     }
                 }
-            }
-        }
-        FinalPlan();
-    }
 
-    public void FinalPlan()
-    {
-        finalPlan.Clear();
-        int bestLength = int.MaxValue;
-        List<Action> bestPath = new();
-
-        for (int i = 0; i < possibleActions.Count; i++)
-        {
-            if (failedActions.Contains(possibleActions[i]))
-            {
-                continue;
-            }
-
-            List<string> visited = new();
-            List<Action> currentPath = new();
-
-            if (PlanPath(possibleActions[i], currentPath, visited))
-            {
-                if (currentPath.Count < bestLength)
+                if (!hasEffect)
                 {
-                    bestLength = currentPath.Count;
-                    bestPath = currentPath;
-                }
-            }
-        }
-
-        if (bestPath != null)
-        {
-            finalPlan = bestPath;
-            Debug.Log("final plan:");
-
-            for (int i = 0; i < finalPlan.Count; i++)
-            {
-                Debug.Log(finalPlan[i].actionName);
-            }
-
-            StartCoroutine(ExecutePlanCoroutine());
-        }
-        else
-        {
-            Debug.LogError("Goal can not be achieved");
-        }
-    }
-
-    public bool PlanPath(Action action, List<Action> path, List<string> visited)
-    {
-        for (int i = 0; i < action.prerequisits.Count; i++)
-        {
-            for (int j = 0; j < visited.Count; j++)
-            {
-                if (visited[j] == action.prerequisits[i].name)
-                {
-                    return false;
-                }
-            }
-
-            bool hasEffect = false;
-            for (int j = 0; j < worldState.receivedEffects.Count; j++)
-            {
-                if (action.prerequisits[i].name == worldState.receivedEffects[j].name)
-                {
-                    hasEffect = true;
-                    break;
-                }
-            }
-
-            if (!hasEffect)
-            {
-                Action subAction = null;
-                for (int a = 0; a < actions.Count; a++)
-                {
-                    if (failedActions.Contains(actions[a]))
+                    Action subGoapAction = null;
+                    for (int a = 0; a < actions.Count; a++)
                     {
-                        continue;
-                    }
-                    
-                    for (int e = 0; e < actions[a].effects.Count; e++)
-                    {
-                        if (actions[a].effects[e].name == action.prerequisits[i].name)
+                        if (failedActions.Contains(actions[a]))
                         {
-                            subAction = actions[a];
+                            continue;
+                        }
+                    
+                        for (int e = 0; e < actions[a].effects.Count; e++)
+                        {
+                            if (actions[a].effects[e].name == goapAction.prerequisits[i].name)
+                            {
+                                subGoapAction = actions[a];
+                                break;
+                            }
+                        }
+
+                        if (subGoapAction != null)
+                        {
                             break;
                         }
                     }
 
-                    if (subAction != null)
+                    if (subGoapAction == null)
                     {
-                        break;
+                        return false;
+                    }
+
+                    visited.Add(goapAction.prerequisits[i].name);
+
+                    if (!PlanPath(subGoapAction, path, visited))
+                    {
+                        return false;
                     }
                 }
 
-                if (subAction == null)
-                {
-                    return false;
-                }
-
-                visited.Add(action.prerequisits[i].name);
-
-                if (!PlanPath(subAction, path, visited))
-                {
-                    return false;
-                }
             }
 
+            path.Add(goapAction);
+            return true;
         }
-
-        path.Add(action);
-        return true;
-    }
     
 
-    private IEnumerator ExecutePlanCoroutine()
-    {
-        while (finalPlan.Count > 0)
+        private IEnumerator ExecutePlanCoroutine()
         {
-            for (int i = 0; i < finalPlan.Count; i++)
+            while (finalPlan.Count > 0)
             {
-                Action currentAction = finalPlan[i];
-                currentAction.DoAction();
-
-                while (currentAction.isMoving)
+                for (int i = 0; i < finalPlan.Count; i++)
                 {
-                    yield return null;
-                }
+                    Action currentGoapAction = finalPlan[i];
+                    currentGoapAction.DoAction();
 
-                yield return new WaitForSeconds(1f);
-
-                if (!currentAction.wasSuccesful)
-                {
-                    Debug.LogError("Action " + currentAction.actionName + " failed. Replanning.");
-
-                    if (!failedActions.Contains(currentAction))
+                    while (currentGoapAction.isMoving)
                     {
-                        failedActions.Add(currentAction);
+                        yield return null;
                     }
 
                     yield return new WaitForSeconds(1f);
 
-                    CheckingActions();
-                    yield break;
-                }
-            }
+                    if (!currentGoapAction.wasSuccesful)
+                    {
+                        Debug.LogError("Action " + currentGoapAction.actionName + " failed. Replanning.");
 
-            Debug.Log("Finished executing plan.");
-            yield break;
+                        if (!failedActions.Contains(currentGoapAction))
+                        {
+                            failedActions.Add(currentGoapAction);
+                        }
+
+                        yield return new WaitForSeconds(1f);
+
+                        CheckingActions();
+                        yield break;
+                    }
+                }
+
+                Debug.Log("Finished executing plan.");
+                yield break;
+            }
         }
     }
 }
