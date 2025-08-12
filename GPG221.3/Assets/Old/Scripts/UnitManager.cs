@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using NPC;
 using UnityEngine;
 
 public class UnitManager : Singleton<UnitManager>

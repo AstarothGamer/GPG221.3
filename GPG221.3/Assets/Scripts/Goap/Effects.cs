@@ -1,8 +1,8 @@
-namespace Goap
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+[System.Serializable]
+public class Effect 
 {
-    [System.Serializable]
-    public class Effect 
-    {
-        public string name;
-    }
+    public string name;
 }
