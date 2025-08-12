@@ -1,10 +1,12 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using Unity.Mathematics;
 using UnityEngine;
 
 public class Pathfinder
 {
-
+    // A* Pathfinding
     public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile, bool includeStartTile = false, bool stopOneTileEarly = false)
     {
         Dictionary<Tile, PathfinderTileData> tileData = new();
@@ -68,7 +70,81 @@ public class Pathfinder
     {
         return Mathf.RoundToInt(Mathf.Abs(t1.position.x - t2.position.x) + Mathf.Abs(t1.position.y - t2.position.y));
     }
+    
+    
+    // Dijkstra to get the nearest tile of a certain type
+    public static Tile GetNearestTile(GridManager grid, Tile startTile, Func<Tile, bool> criteria,
+        bool ignoreWalkable = false)
+    {
+        Heap<DijkstraTileData> queue = new(Mathf.CeilToInt(grid.Count * .7f));
+        queue.Add(new DijkstraTileData(startTile, 0));
+        HashSet<Tile> visited = new() { startTile };
 
+        while (queue.Count > 0)
+        {
+            var current =  queue.RemoveFirst();
+            
+            if(criteria.Invoke(current.tile))
+                return current.tile;
+
+            foreach (Tile neighbour in grid.GetAdjacentTiles(current.tile.position))
+            {
+                if (!visited.Contains(neighbour) && (ignoreWalkable || neighbour.IsWalkable))
+                {
+                    visited.Add(neighbour);
+                    queue.Add(new DijkstraTileData(neighbour, current.cost + GetDistance(current.tile, neighbour)));
+                }
+            }
+        }
+        return null;
+    }
+    
+    // BFS to get all tiles within a certain range
+    public static List<Tile> GetReachableTiles(GridManager grid, Tile startTile, float range, Func<Tile, bool> returnCriteria = null)
+    {
+        Queue<(Tile tile, float dist)> queue = new();
+        queue.Enqueue((startTile, 0));
+        HashSet<Tile> visited = new() { startTile };
+        List<Tile> inRange = new();
+
+        while (queue.Count > 0)
+        {
+            var current =  queue.Dequeue();
+            if(current.dist > range)
+                continue;
+            
+            if(returnCriteria?.Invoke(current.tile) ?? true)
+                inRange.Add(current.tile);
+
+            foreach (Tile neighbour in grid.GetAdjacentTiles(current.tile.position))
+            {
+                if (!visited.Contains(neighbour) && neighbour.IsWalkable)
+                {
+                    visited.Add(neighbour);
+                    queue.Enqueue((neighbour, current.dist + GetDistance(current.tile, neighbour)));
+                }
+            }
+        }
+        return inRange;
+    }
+
+
+
+    class DijkstraTileData : IHeapItem<DijkstraTileData>
+    {
+        public Tile tile;
+        public float cost;
+
+        public DijkstraTileData(Tile tile, float cost)
+        {
+            this.tile = tile;
+            this.cost = cost;
+        }
+        
+        public int HeapIndex { get; set; }
+        public int CompareTo(DijkstraTileData other) 
+            => cost.CompareTo(other.cost);
+    }
     
     class PathfinderTileData : IHeapItem<PathfinderTileData>
     {
