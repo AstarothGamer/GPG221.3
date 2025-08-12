@@ -60,9 +60,9 @@ public class GridManager : Singleton<GridManager>
     public IEnumerable<Tile> GetTilesInCircle(Vector3 center, float range)
     {
         var rangeSquared = range * range;
-        for (int x = Mathf.RoundToInt(center.x - range); x < Mathf.RoundToInt(center.x + range); x++)
+        for (int x = Mathf.FloorToInt(center.x - range); x < Mathf.CeilToInt(center.x + range); x++)
         {
-            for (int y = Mathf.RoundToInt(center.y - range); y < Mathf.RoundToInt(center.y + range); y++)
+            for (int y = Mathf.FloorToInt(center.y - range); y < Mathf.CeilToInt(center.y + range); y++)
             {
                 var dx = x - center.x;
                 var dy = y - center.y;
