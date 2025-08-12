@@ -5,7 +5,7 @@ using UnityEngine;
 public class Pathfinder
 {
 
-    public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile, bool includeStartTile = false, int targetDistanceFromEnd = 1)
+    public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile, bool includeStartTile = false, bool stopOneTileEarly = false)
     {
         Dictionary<Tile, PathfinderTileData> tileData = new();
         Heap<PathfinderTileData> openSet = new (grid.Count);
@@ -24,6 +24,9 @@ public class Pathfinder
             
             foreach (Tile neighbour in grid.GetAdjacentTiles(currentTile.Original.position))
             {
+                if(stopOneTileEarly && neighbour == endTile)
+                    return RetracePath(currentTile, includeStartTile);
+                
                 if (!neighbour || !neighbour.IsWalkable || closedSet.Contains(neighbour))
                     continue;
                 int newMovementCostToNeighbour = currentTile.GCost + GetDistance(currentTile.Original, neighbour);
@@ -49,8 +52,8 @@ public class Pathfinder
     {
         List<Tile> path = new List<Tile>();
         PathfinderTileData currentTile = endTile;
-    
-        while (currentTile.Parent != null)
+        
+        while (currentTile.Parent != null || currentTile == endTile)
         {
             path.Add(currentTile.Original);
             currentTile = currentTile.Parent;

@@ -8,37 +8,35 @@ namespace NPC
 {
     public class FollowPathMovement : MonoBehaviour
     {
-        public void GoTo(Tile destination, float speed, bool findNewPathIfBlocked = true,
-            System.Action targetReachedCallback = null, System.Action pathBlockedCallback = null)
+        public void StartGoTo(Tile destination, float speed, bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, Action pathBlockedCallback = null)
+        {
+            StartCoroutine(GoToCoroutine(destination, speed, findNewPathIfBlocked, 
+                targetReachedCallback, pathBlockedCallback));
+        }
+
+        public void StartFollowPath(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, Action pathBlockedCallback = null)
+        {
+            StartCoroutine(FollowPathCoroutine(path, speed, findNewPathIfBlocked, 
+                targetReachedCallback, pathBlockedCallback));
+        }
+
+
+        public IEnumerator GoToCoroutine(Tile destination, float speed, bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
             var current = GridManager.Instance.Get(transform.position);
             var path = Pathfinder.FindPath(GridManager.Instance, current, destination);
-            if (path == null || path.Count == 0)
-            {
-                pathBlockedCallback?.Invoke();
-                return;
-            }
 
-            FollowPath(path, speed, findNewPathIfBlocked, targetReachedCallback, pathBlockedCallback);
+            yield return FollowPathCoroutine(path, speed, findNewPathIfBlocked, 
+                targetReachedCallback, pathBlockedCallback);
         }
-
-        public void FollowPath(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
+        
+        public IEnumerator FollowPathCoroutine(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
             Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
-            if (path == null || path.Count == 0)
-            {
-                Debug.LogWarning("Path is empty", this);
-            }
-
-            StopAllCoroutines();
-            StartCoroutine(FollowPathCoroutine(path, speed, findNewPathIfBlocked, targetReachedCallback,
-                pathBlockedCallback));
-        }
-
-        private IEnumerator FollowPathCoroutine(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, Action pathBlockedCallback = null)
-        {
-            if (path.Count == 0)
+            if (path?.Count == 0)
             {
                 Debug.LogWarning("Path is empty", this);
                 yield break;
@@ -60,6 +58,8 @@ namespace NPC
                     //Reached destination
                     if (currentIndex == path.Count)
                     {
+                        if(TryGetComponent(out Unit unit))
+                            unit.SetTile(path.LastOrDefault());
                         targetReachedCallback?.Invoke();
                         yield break;
                     }
@@ -69,7 +69,7 @@ namespace NPC
                     {
                         if (findNewPathIfBlocked)
                         {
-                            GoTo(path.LastOrDefault(), speed, findNewPathIfBlocked, targetReachedCallback,
+                            StartGoTo(path.LastOrDefault(), speed, findNewPathIfBlocked, targetReachedCallback,
                                 pathBlockedCallback);
                             yield break;
                         }
