@@ -1,18 +1,17 @@
-using Sirenix.OdinInspector;
-using System;
 using System.Collections.Generic;
-using System.Linq;
+using Sirenix.OdinInspector;
 using Sirenix.Utilities;
+using System.Linq;
 using UnityEngine;
-
 
 public class GridManager : Singleton<GridManager>
 {
     [ShowInInspector] Dictionary<Vector2Int, Tile> tiles = new ();
-
     public int Count => tiles.Count;
 
-
+    private Tile cachedHoveringTile;
+    private float cachedHoveringTileTime;
+    
     protected override void Awake()
     {
         base.Awake();
@@ -20,6 +19,8 @@ public class GridManager : Singleton<GridManager>
             x => AddTile(FixCoords(x.transform.position), x));
     }
 
+    public static Vector2Int FixCoords(Vector3 position) 
+        => new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
 
     public void AddTile(Vector2Int position, Tile tile)
     {
@@ -31,8 +32,47 @@ public class GridManager : Singleton<GridManager>
 
         tile.Initialize(position);
     }
+    
+    public void Remove(Tile tile, bool destroy = false)
+        => Remove(tiles.FirstOrDefault(x => x.Value == tile).Key, destroy);
+    public void Remove(Vector2Int position, bool destroy = false)
+    {
+        if(destroy) 
+            Destroy(tiles[position].gameObject);
+        tiles.Remove(position);
+    }
+    
+    public void Clear()
+    {
+        while (tiles.Count > 0)
+        {
+            var t = tiles.First().Value;
+            Remove(t);
+            Destroy(t.gameObject);
+        }
+    }
+    
+    public bool Contains(Vector2Int position) => tiles.ContainsKey(position);
+    public bool Contains(Tile tile) => tiles.ContainsValue(tile);
+    
+    public IEnumerable<Tile> GetAll() => tiles.Values;
+    
+    public bool TryGetTile(Vector2Int position, out Tile tile) => tiles.TryGetValue(position, out tile);
+    public bool TryGetTile(Vector3 position, out Tile tile) => tiles.TryGetValue(FixCoords(position), out tile);
+    public Tile Get(Vector3 position) => Get(FixCoords(position));
+    public Tile Get(Vector2Int position) => tiles.GetValueOrDefault(position);
+    
+    public Tile GetHoveringTile()
+    {
+        if (Time.time.Equals(cachedHoveringTileTime))
+            return cachedHoveringTile;
 
-
+        var mousePos = Helpers.Camera.ScreenToWorldPoint(Input.mousePosition);
+        cachedHoveringTile = Get(mousePos);
+        cachedHoveringTileTime = Time.time;
+        return cachedHoveringTile;
+    }
+    
     public List<Tile> GetAdjacentTiles(Vector2Int position)
     {
         List<Tile> neighbors = new List<Tile>();
@@ -48,15 +88,7 @@ public class GridManager : Singleton<GridManager>
 
         return neighbors;
     }
-
-
-    public static Vector2Int FixCoords(Vector3 position) => new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
-    public bool TryGetTile(Vector2Int position, out Tile tile) => tiles.TryGetValue(position, out tile);
-    public bool TryGetTile(Vector3 position, out Tile tile) => tiles.TryGetValue(FixCoords(position), out tile);
-    public Tile Get(Vector3 position) => Get(FixCoords(position));
-    public Tile Get(Vector2Int position) => tiles.GetValueOrDefault(position);
-    public IEnumerable<Tile> GetAll() => tiles.Values;
-
+    
     public IEnumerable<Tile> GetTilesInCircle(Vector3 center, float range)
     {
         var rangeSquared = range * range;
@@ -72,40 +104,5 @@ public class GridManager : Singleton<GridManager>
                         yield return tile;
             }
         }
-    }
-    
-    public void Remove(Tile tile, bool destroy = false)
-        => Remove(tiles.FirstOrDefault(x => x.Value == tile).Key, destroy);
-    public void Remove(Vector2Int position, bool destroy = false)
-    {
-        if(destroy) 
-            Destroy(tiles[position].gameObject);
-        tiles.Remove(position);
-    }
-
-    public void Clear()
-    {
-        while (tiles.Count > 0)
-        {
-            var t = tiles.First().Value;
-            Remove(t);
-            Destroy(t.gameObject);
-        }
-    }
-
-    public bool Contains(Vector2Int position) => tiles.ContainsKey(position);
-    public bool Contains(Tile tile) => tiles.ContainsValue(tile);
-
-    Tile cachedHoveringTile;
-    float cachedHoveringTileTime;
-    public Tile GetHoveringTile()
-    {
-        if (Time.time.Equals(cachedHoveringTileTime))
-            return cachedHoveringTile;
-
-        var mousePos = Helpers.Camera.ScreenToWorldPoint(Input.mousePosition);
-        cachedHoveringTile = Get(mousePos);
-        cachedHoveringTileTime = Time.time;
-        return cachedHoveringTile;
     }
 }
