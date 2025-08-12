@@ -20,50 +20,11 @@ namespace Goap
         public bool wasSuccesful = false;
 
 
-        public virtual void DoAction()
+        public virtual IEnumerator DoAction()
         {
-            StartCoroutine(SmoothMoving(targetPosition.transform.position));
+            yield return null;
         }
 
-        private IEnumerator SmoothMoving(Vector3 direction)
-        {
-            isMoving = true;
-
-            Vector3 startPos = transform.position;
-            Vector3 endPos = direction;
-            float duration = 4f;
-            float time = 0f;
-
-            currentActionText.text = "Going to " + targetPosition.name + ".";
-            while (time < duration)
-            {
-                float speed = Vector3.Distance(startPos, endPos) / duration;
-                transform.position = Vector3.MoveTowards(transform.position, endPos, speed * Time.deltaTime);
-
-                time += Time.deltaTime;
-                yield return null;
-            }
-            currentActionText.text = "Came to " + targetPosition.name + ".";
-
-            yield return new WaitForSeconds(1f); ;
-
-            transform.position = endPos;
-            isMoving = false;
-
-            currentActionText.text = "Starting do " + actionName + ".";
-            yield return new WaitForSeconds(1f);
-
-            if (TryDoAction())
-            {
-                ApplyEffects();
-                wasSuccesful = true;
-            }
-            else
-            {
-                wasSuccesful = false;
-            }
-            yield return new WaitForSeconds(1f); 
-        }
 
         public virtual bool TryDoAction()
         {

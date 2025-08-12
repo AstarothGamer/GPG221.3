@@ -160,14 +160,7 @@ namespace Goap
                 for (int i = 0; i < finalPlan.Count; i++)
                 {
                     Action currentGoapAction = finalPlan[i];
-                    currentGoapAction.DoAction();
-
-                    while (currentGoapAction.isMoving)
-                    {
-                        yield return null;
-                    }
-
-                    yield return new WaitForSeconds(1f);
+                    yield return currentGoapAction.DoAction();
 
                     if (!currentGoapAction.wasSuccesful)
                     {
