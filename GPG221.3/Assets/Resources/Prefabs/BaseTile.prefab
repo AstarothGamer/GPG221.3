@@ -619,7 +619,7 @@ GameObject:
   - component: {fileID: 6115416160615969421}
   - component: {fileID: 5598602552171649139}
   m_Layer: 0
-  m_Name: Aiming
+  m_Name: Cover
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -635,7 +635,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 0.9, y: 0.9, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 4312062340934317080}
@@ -681,8 +681,8 @@ SpriteRenderer:
   m_SortingLayerID: 0
   m_SortingLayer: 0
   m_SortingOrder: 0
-  m_Sprite: {fileID: -1142974607, guid: af68e0782fbea834ebd8a1dffe912c30, type: 3}
-  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_Sprite: {fileID: 7482667652216324306, guid: 311925a002f4447b3a28927169b83ea6, type: 3}
+  m_Color: {r: 0.6132076, g: 0.5813902, b: 0.5813902, a: 1}
   m_FlipX: 0
   m_FlipY: 0
   m_DrawMode: 0
@@ -872,7 +872,7 @@ GameObject:
   - component: {fileID: 2839551643505549336}
   - component: {fileID: 8006660474551805335}
   m_Layer: 0
-  m_Name: Tile
+  m_Name: BaseTile
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -908,10 +908,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   position: {x: 0, y: 0}
-  IsWalkable: 1
-  gfx: {fileID: 8006660474551805335}
   contentParent: {fileID: 8327556480139620410}
+  gfx: {fileID: 8006660474551805335}
   unit: {fileID: 0}
+  content: {fileID: 0}
+  isWalkable: 0
 --- !u!114 &8006660474551805335
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -924,11 +925,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 49cd9caf0629b9e4fbda867c48f22c73, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  defaultColor: {r: 0.23921569, g: 0.22352941, b: 0.26666668, a: 1}
+  freeColor: {r: 0.22932851, g: 0.20518868, b: 0.2735849, a: 1}
+  walkableColor: {r: 0.18850385, g: 0.17297079, b: 0.21698111, a: 1}
+  blockedColor: {r: 0.14697658, g: 0.13692597, b: 0.16037738, a: 1}
+  fogColor: {r: 0.19297741, g: 0.18503028, b: 0.20754719, a: 1}
   border: {fileID: 7322871488926926965}
   innerBorder: {fileID: 9199503251928207714}
   outerBorder: {fileID: 4164792249747240644}
-  aimingBorder: {fileID: 5598602552171649139}
+  cover: {fileID: 5598602552171649139}
   fill: {fileID: 5250966698556535718}
   pathUp: {fileID: 7042100298308915253}
   pathLeft: {fileID: 5385842128310498985}

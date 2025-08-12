@@ -3,8 +3,8 @@ using System.Linq;
 
 public class Heap<T> where T : IHeapItem<T>
 {
-    T[] items;
-    int currentItemCount;
+    private T[] items;
+    private int currentItemCount;
     public int Count => currentItemCount;
 
     public Heap(int maxHeapSize)
@@ -12,15 +12,9 @@ public class Heap<T> where T : IHeapItem<T>
         items = new T[maxHeapSize];
     }
 
-    public bool Any(Func<T, bool> check)
-    {
-        return items.Any(x => check(x));
-    }
-
-    public bool Contains(T item)
-    {
-        return Equals(items[item.HeapIndex], item);
-    }
+    public void Clear() => Array.Clear(items, 0, items.Length);
+    public bool Any(Func<T, bool> check) => items.Any(check);
+    public bool Contains(T item) => Equals(items[item.HeapIndex], item);
 
     public void UpdateItem(T item)
     {
@@ -51,11 +45,10 @@ public class Heap<T> where T : IHeapItem<T>
     {
         int childIndexLeft = item.HeapIndex * 2 + 1;
         int childIndexRight = item.HeapIndex * 2 + 2;
-        int swapIndex = 0;
 
         if (childIndexLeft < currentItemCount)
         {
-            swapIndex = childIndexLeft;
+            int swapIndex = childIndexLeft;
 
             if (childIndexRight < currentItemCount
                 && items[childIndexLeft].CompareTo(items[childIndexRight]) < 0)
@@ -83,14 +76,11 @@ public class Heap<T> where T : IHeapItem<T>
     {
         items[itemA.HeapIndex] = items[itemB.HeapIndex];
         items[itemB.HeapIndex] = itemA;
-        int itemAIndex = itemA.HeapIndex;
-        itemA.HeapIndex = itemB.HeapIndex;
-        itemB.HeapIndex = itemAIndex;
+        (itemA.HeapIndex, itemB.HeapIndex) = (itemB.HeapIndex, itemA.HeapIndex);
     }
 }
 
 public interface IHeapItem<T> : IComparable<T>
 {
     int HeapIndex { get; set; }
-
 }

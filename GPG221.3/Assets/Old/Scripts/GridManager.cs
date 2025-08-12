@@ -17,7 +17,7 @@ public class GridManager : Singleton<GridManager>
     {
         base.Awake();
         GetComponentsInChildren<Tile>().ForEach(
-            x => AddTile(FixCoordinates(x.transform.position), x));
+            x => AddTile(FixCoords(x.transform.position), x));
     }
 
 
@@ -50,17 +50,30 @@ public class GridManager : Singleton<GridManager>
     }
 
 
-    public static Vector2Int FixCoordinates(Vector3 position) => new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
-    public Tile Get(Vector3 position) => Get(FixCoordinates(position));
-    public Tile Get(Vector2Int position)
-    {
-        if (tiles.ContainsKey(position))
-            return tiles[position];
-        return null;
-    }
-
+    public static Vector2Int FixCoords(Vector3 position) => new Vector2Int(Mathf.RoundToInt(position.x), Mathf.RoundToInt(position.y));
+    public bool TryGetTile(Vector2Int position, out Tile tile) => tiles.TryGetValue(position, out tile);
+    public bool TryGetTile(Vector3 position, out Tile tile) => tiles.TryGetValue(FixCoords(position), out tile);
+    public Tile Get(Vector3 position) => Get(FixCoords(position));
+    public Tile Get(Vector2Int position) => tiles.GetValueOrDefault(position);
     public IEnumerable<Tile> GetAll() => tiles.Values;
 
+    public IEnumerable<Tile> GetTilesInCircle(Vector3 center, float range)
+    {
+        var rangeSquared = range * range;
+        for (int x = Mathf.RoundToInt(center.x - range); x < Mathf.RoundToInt(center.x + range); x++)
+        {
+            for (int y = Mathf.RoundToInt(center.y - range); y < Mathf.RoundToInt(center.y + range); y++)
+            {
+                var dx = x - center.x;
+                var dy = y - center.y;
+                
+                if (dx * dx + dy * dy < rangeSquared)
+                    if(TryGetTile(new Vector2Int(x, y), out Tile tile))
+                        yield return tile;
+            }
+        }
+    }
+    
     public void Remove(Tile tile, bool destroy = false)
         => Remove(tiles.FirstOrDefault(x => x.Value == tile).Key, destroy);
     public void Remove(Vector2Int position, bool destroy = false)

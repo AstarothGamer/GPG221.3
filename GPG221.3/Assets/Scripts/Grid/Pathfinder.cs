@@ -12,7 +12,7 @@ public class Pathfinder
         Dictionary<Tile, PathfinderTileData> tileData = new();
         Heap<PathfinderTileData> openSet = new (grid.Count);
         HashSet<Tile> closedSet = new HashSet<Tile>();
-
+        
         tileData.Add(startTile, new PathfinderTileData(startTile, 0, GetDistance(startTile, endTile), null));
         openSet.Add(tileData[startTile]);
 
@@ -22,7 +22,7 @@ public class Pathfinder
             closedSet.Add(currentTile.Original);
 
             if (currentTile.Original == endTile)
-                    return RetracePath(currentTile, includeStartTile);
+                return RetracePath(currentTile, includeStartTile);
             
             foreach (Tile neighbour in grid.GetAdjacentTiles(currentTile.Original.position))
             {
@@ -31,7 +31,7 @@ public class Pathfinder
                 
                 if (!neighbour || !neighbour.IsWalkable || closedSet.Contains(neighbour))
                     continue;
-                int newMovementCostToNeighbour = currentTile.GCost + GetDistance(currentTile.Original, neighbour);
+                int newMovementCostToNeighbour = currentTile.GCost + GetDistance(currentTile.Original, neighbour) + (neighbour.Discovered ? 0 : 3);
 
                 if (!tileData.ContainsKey(neighbour))
                 {
@@ -55,13 +55,16 @@ public class Pathfinder
         List<Tile> path = new List<Tile>();
         PathfinderTileData currentTile = endTile;
         
-        while (currentTile.Parent != null || currentTile == endTile)
+        do 
         {
             path.Add(currentTile.Original);
             currentTile = currentTile.Parent;
-        }
-        if (includeStartTile)
+        } 
+        while (currentTile?.Parent != null);
+        
+        if (includeStartTile && currentTile != null)
             path.Add(currentTile.Original);
+        
         path.Reverse();
         return path;
     }

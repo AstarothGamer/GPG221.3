@@ -1,49 +1,61 @@
+using System;
 using Sirenix.OdinInspector;
 using UnityEngine;
 using System.Collections.Generic;
 
 public class TileGFX : MonoBehaviour
 {
-    Tile tile;
-    public Color defaultColor;
-
-    public void Awake()
-    {
-        tile = GetComponent<Tile>();
-    }
+    [SerializeField, FoldoutGroup("Colors")] Color freeColor;
+    [SerializeField, FoldoutGroup("Colors")] Color walkableColor;
+    [SerializeField, FoldoutGroup("Colors")] Color blockedColor;
+    [SerializeField, FoldoutGroup("Colors")] Color fogColor;
 
     [SerializeField, FoldoutGroup("References")] SpriteRenderer border;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer innerBorder;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer outerBorder;
-    [SerializeField, FoldoutGroup("References")] SpriteRenderer aimingBorder;
+    [SerializeField, FoldoutGroup("References")] SpriteRenderer cover;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer fill;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer pathUp;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer pathLeft;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer pathDown;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer pathRight;
     [SerializeField, FoldoutGroup("References")] SpriteRenderer pathDestination;
+
+    protected Tile tile;
+    public void Awake()
+    {
+        tile = GetComponent<Tile>();
+    }
     
+    private void Start()
+    {
+        cover.enabled = !tile.Discovered;
+        cover.color = fogColor;
+        border.color = tile.CanStandOn ? freeColor : (tile.IsWalkable ? walkableColor : blockedColor);
+    }
+
+    private void Update()
+    {
+        ResetGraphics();
+    }
 
     public void ResetGraphics()
     {
+        cover.enabled = !tile.Discovered;
+        
+        border.color = tile.CanStandOn ? freeColor : (tile.IsWalkable ? walkableColor : blockedColor);
         border.enabled = true;
-        border.color = defaultColor;
+        
         innerBorder.enabled = false;
         outerBorder.enabled = false;
-        aimingBorder.enabled = false;
-
+        
         pathUp.enabled = false;
         pathLeft.enabled = false;
         pathDown.enabled = false;
         pathRight.enabled = false;
         pathDestination.enabled = false;
-
-        if(!tile.IsWalkable)
-            fill.color = Color.gray;
-        else
-            fill.enabled = false;
     }
-
+    
     public void SetOuterBorderColor(Color color)
     {
         outerBorder.enabled = true;
@@ -64,10 +76,10 @@ public class TileGFX : MonoBehaviour
         fill.enabled = true;
         fill.color = color;
     }
-    public void SetAimingColor(Color color)
+    public void SetCoverColor(Color color)
     {
-        aimingBorder.enabled = true;
-        aimingBorder.color = color;
+        cover.enabled = true;
+        cover.color = color;
     }
     public void SetPathDestination()
     {

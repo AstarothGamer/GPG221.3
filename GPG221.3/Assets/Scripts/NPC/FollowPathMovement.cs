@@ -2,12 +2,22 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 namespace NPC
 {
     public class FollowPathMovement : MonoBehaviour
     {
+        private VisionSource visionSource;
+        private Unit unit;
+        
+        private void Awake()
+        {
+            visionSource = GetComponent<VisionSource>();
+            unit = GetComponent<Unit>();
+        }
+
         public void StartGoTo(Tile destination, float speed, bool findNewPathIfBlocked = true,
             Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
@@ -29,19 +39,31 @@ namespace NPC
             var current = GridManager.Instance.Get(transform.position);
             var path = Pathfinder.FindPath(GridManager.Instance, current, destination);
 
+            if (path == null || path.Count == 0)
+            {
+                unit?.SetTile(GridManager.Instance.Get(transform.position));
+                pathBlockedCallback?.Invoke();
+                yield break;
+            }
+            
             yield return FollowPathCoroutine(path, speed, findNewPathIfBlocked, 
                 targetReachedCallback, pathBlockedCallback);
         }
-        
+
+        [ShowInInspector, ReadOnly] List<Tile> currentPath;
         public IEnumerator FollowPathCoroutine(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
             Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
-            if (path?.Count == 0)
+            if (path == null || path.Count == 0)
             {
                 Debug.LogWarning("Path is empty", this);
+                pathBlockedCallback?.Invoke();
                 yield break;
             }
-
+            
+            unit?.SetTile(null);
+            currentPath = path;
+            
             int currentIndex = 0;
             var nextTilePos = path[currentIndex].transform.position;
 
@@ -54,12 +76,13 @@ namespace NPC
                 {
                     transform.position = nextTilePos;
                     currentIndex++;
+                    
+                    visionSource?.CheckVision(); // UPDATE FOG OF WAR
 
                     //Reached destination
                     if (currentIndex == path.Count)
                     {
-                        if(TryGetComponent(out Unit unit))
-                            unit.SetTile(path.LastOrDefault());
+                        unit?.SetTile(path.LastOrDefault());
                         targetReachedCallback?.Invoke();
                         yield break;
                     }
@@ -69,12 +92,15 @@ namespace NPC
                     {
                         if (findNewPathIfBlocked)
                         {
-                            StartGoTo(path.LastOrDefault(), speed, findNewPathIfBlocked, targetReachedCallback,
-                                pathBlockedCallback);
+                            yield return GoToCoroutine(path.LastOrDefault(), speed, findNewPathIfBlocked, 
+                                targetReachedCallback, pathBlockedCallback);
                             yield break;
                         }
-
+                        
                         Debug.Log("Path blocked", this);
+                        
+                        unit?.SetTile(GridManager.Instance.Get(transform.position));
+                        
                         pathBlockedCallback?.Invoke();
                         yield break;
                     }

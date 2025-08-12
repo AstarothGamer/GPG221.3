@@ -1,15 +1,23 @@
 using NPC;
+using Sirenix.OdinInspector;
 using UnityEngine;
 
 public class Tile : MonoBehaviour
 {
     public Vector2Int position;
-    public bool IsWalkable = true;
-    public virtual bool CanStandOn => IsWalkable && !unit;
-    public TileGFX gfx;
-
+    
     [SerializeField] protected Transform contentParent;
+    public TileGFX gfx;
+    
     public Unit unit;
+    public TileContent content;
+    
+    [ShowInInspector] public bool IsWalkable => !discovered || (isWalkable && (!content || content.CanWalkOn));
+    [ShowInInspector] public virtual bool CanStandOn => !discovered || (IsWalkable && !unit);
+    public bool Discovered => discovered; 
+    
+    [SerializeField] protected bool isWalkable = true;
+    [ShowInInspector, ReadOnly] protected bool discovered;
     
     private void Awake()
     {
@@ -28,9 +36,26 @@ public class Tile : MonoBehaviour
         GridManager.Instance?.Remove(this);
     }
 
-    public void PlaceUnit(Unit unit)
+    public void Discover()
     {
-        if (!unit) return;
+        discovered = true;
+    }
+    
+    public void PlaceContent(TileContent content)
+    {
+        content.transform.SetParent(contentParent);
+        content.transform.localPosition = Vector3.zero;
+        content.SetTile(this);
+    }
+    
+    public void SetUnit(Unit unit)
+    {
+        if (!unit)
+        {
+            this.unit = null;
+            return;
+        }
+        
         if (this.unit && this.unit != unit)
         {
             Debug.LogError("Tile is already occupied!");

@@ -5,10 +5,11 @@ public class GridGenerator : MonoBehaviour
 {
     public bool resetOnStart;
     public GameObject tile;
+    public GameObject obstacleTile;
     public Vector2Int size;
     public int obstacleChance = 20;
 
-    private void Start()
+    private void Awake()
     {
         if (resetOnStart)
             ResetGrid();
@@ -28,13 +29,17 @@ public class GridGenerator : MonoBehaviour
         {
             for (int y = -size.y / 2; y < size.y / 2; y++)
             {
-                var t = Instantiate(tile, new Vector3(x, y), Quaternion.identity, transform);
                 if (Random.Range(0, 100) < obstacleChance)
                 {
-                    t.GetComponent<Tile>().IsWalkable = false;
-                    t.GetComponent<TileGFX>().SetFillColor(Color.gray);
+                    var t = Instantiate(obstacleTile, new Vector3(x, y), Quaternion.identity, transform);
+                    t.name = $"Obstacle";
                 }
-                t.name = $"Tile [{x}, {y}]";
+                else
+                {
+                    var t = Instantiate(tile, new Vector3(x, y), Quaternion.identity, transform);
+                    t.name = $"Ground";
+                }
+                    
             }
         }
     }
