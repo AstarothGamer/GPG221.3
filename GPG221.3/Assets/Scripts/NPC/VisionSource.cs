@@ -7,7 +7,7 @@ public class VisionSource : MonoBehaviour
     public float VisionRange => visionRange;
     [SerializeField] bool checkOnStart = true;
 
-    private void Start()
+    private void Awake()
     {
         if(checkOnStart)
             CheckVision();

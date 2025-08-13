@@ -29,14 +29,14 @@ namespace NPC
             // test
             var moveTo = GridManager.Instance.Get(new Vector2Int(5, 4));
 
-            yield return movement.GoToCoroutine(moveTo, 2, true, () => { Debug.Log("reached goal"); },
+            yield return movement.GoToCoroutine(moveTo, 2, false, true, () => { Debug.Log("reached goal"); },
                 () => { Debug.Log("path blocked"); });
             
             var moveTo2 = GridManager.Instance.Get(new Vector2Int(0, 0));
             var path2 = Pathfinder.FindPath(GridManager.Instance, currentTile, moveTo2, false, true);
             
             yield return movement.FollowPathCoroutine(path2, 2, true, () => { Debug.Log("reached goal"); },
-                () => { Debug.Log("path blocked"); });
+                () => { Debug.Log("path blocked"); }, moveTo2);
             /////////
         }
         private void OnDestroy()

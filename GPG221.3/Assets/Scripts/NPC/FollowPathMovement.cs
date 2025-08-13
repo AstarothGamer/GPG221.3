@@ -18,11 +18,11 @@ namespace NPC
             unit = GetComponent<Unit>();
         }
 
-        public void StartGoTo(Tile destination, float speed, bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, Action pathBlockedCallback = null)
+        public void StartGoTo(Tile destination, float speed, bool stopAtAdjacent = false, 
+            bool findNewPathIfBlocked = true, Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
             StartCoroutine(GoToCoroutine(destination, speed, findNewPathIfBlocked, 
-                targetReachedCallback, pathBlockedCallback));
+                stopAtAdjacent, targetReachedCallback, pathBlockedCallback));
         }
 
         public void StartFollowPath(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
@@ -33,7 +33,7 @@ namespace NPC
         }
 
 
-        public IEnumerator GoToCoroutine(Tile destination, float speed, bool findNewPathIfBlocked = true,
+        public IEnumerator GoToCoroutine(Tile destination, float speed, bool stopAtAdjacent = false, bool findNewPathIfBlocked = true,
             Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
             var current = GridManager.Instance.Get(transform.position);
@@ -45,14 +45,14 @@ namespace NPC
                 pathBlockedCallback?.Invoke();
                 yield break;
             }
-            
-            yield return FollowPathCoroutine(path, speed, findNewPathIfBlocked, 
-                targetReachedCallback, pathBlockedCallback);
-        }
 
-        [ShowInInspector, ReadOnly] List<Tile> currentPath;
+            yield return FollowPathCoroutine(path, speed, findNewPathIfBlocked,
+                targetReachedCallback, pathBlockedCallback, stopAtAdjacent ? destination : null);
+        }
+        
+        [ShowInInspector, ReadOnly] List<Tile> currentPath; // for debug only
         public IEnumerator FollowPathCoroutine(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, Action pathBlockedCallback = null)
+            Action targetReachedCallback = null, Action pathBlockedCallback = null, Tile stopAtAdjacentIfFail = null)
         {
             if (path == null || path.Count == 0)
             {
@@ -92,13 +92,12 @@ namespace NPC
                     {
                         if (findNewPathIfBlocked)
                         {
-                            yield return GoToCoroutine(path.LastOrDefault(), speed, findNewPathIfBlocked, 
-                                targetReachedCallback, pathBlockedCallback);
+                            yield return GoToCoroutine(stopAtAdjacentIfFail ?? path.LastOrDefault(), speed, 
+                                stopAtAdjacentIfFail, findNewPathIfBlocked, targetReachedCallback, pathBlockedCallback);
                             yield break;
                         }
                         
                         Debug.Log("Path blocked", this);
-                        
                         unit?.SetTile(GridManager.Instance.Get(transform.position));
                         
                         pathBlockedCallback?.Invoke();

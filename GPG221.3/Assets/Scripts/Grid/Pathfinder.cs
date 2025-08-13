@@ -7,13 +7,15 @@ using UnityEngine;
 public class Pathfinder
 {
     // A* Pathfinding
-    public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile, bool includeStartTile = false, bool stopOneTileEarly = false)
+    public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile, 
+        bool includeStartTile = false, bool stopOneTileEarly = false)
     {
         Dictionary<Tile, PathfinderTileData> tileData = new();
         Heap<PathfinderTileData> openSet = new (grid.Count);
         HashSet<Tile> closedSet = new HashSet<Tile>();
         
-        tileData.Add(startTile, new PathfinderTileData(startTile, 0, GetDistance(startTile, endTile), null));
+        tileData.Add(startTile, new PathfinderTileData(startTile, 0, 
+            GetDistance(startTile, endTile), null));
         openSet.Add(tileData[startTile]);
 
         while (openSet.Count > 0)
@@ -31,11 +33,13 @@ public class Pathfinder
                 
                 if (!neighbour || !neighbour.IsWalkable || closedSet.Contains(neighbour))
                     continue;
-                int newMovementCostToNeighbour = currentTile.GCost + GetDistance(currentTile.Original, neighbour) + (neighbour.Discovered ? 0 : 3);
+                int newMovementCostToNeighbour = currentTile.GCost + GetDistance(currentTile.Original, neighbour) 
+                                                                   + (neighbour.Discovered ? 0 : 3);
 
                 if (!tileData.ContainsKey(neighbour))
                 {
-                    tileData.Add(neighbour, new PathfinderTileData(neighbour, newMovementCostToNeighbour, GetDistance(neighbour, endTile), currentTile));
+                    tileData.Add(neighbour, new PathfinderTileData(neighbour, newMovementCostToNeighbour, 
+                        GetDistance(neighbour, endTile), currentTile));
                     openSet.Add(tileData[neighbour]);
                 }
 
@@ -103,7 +107,8 @@ public class Pathfinder
     }
     
     // BFS to get all tiles within a certain range
-    public static List<Tile> GetReachableTiles(GridManager grid, Tile startTile, float range, Func<Tile, bool> returnCriteria = null)
+    public static List<Tile> GetReachableTiles(GridManager grid, Tile startTile, float range, 
+        Func<Tile, bool> returnCriteria = null)
     {
         Queue<(Tile tile, float dist)> queue = new();
         queue.Enqueue((startTile, 0));
