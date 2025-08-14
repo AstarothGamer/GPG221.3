@@ -25,10 +25,10 @@ namespace NPC
         {
             if (!currentTile)
                 GridManager.Instance.Get(transform.position)?.SetUnit(this);
-        
+            
             // test
             var moveTo = GridManager.Instance.Get(new Vector2Int(5, 4));
-
+            
             yield return movement.GoToCoroutine(moveTo, 2, true, () => { Debug.Log("reached goal"); },
                 () => { Debug.Log("path blocked"); });
             
@@ -38,6 +38,7 @@ namespace NPC
             yield return movement.FollowPathCoroutine(path2, 2, true, () => { Debug.Log("reached goal"); },
                 () => { Debug.Log("path blocked"); });
             /////////
+            
         }
         private void OnDestroy()
         {

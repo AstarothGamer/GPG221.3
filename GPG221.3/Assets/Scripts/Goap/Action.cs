@@ -24,8 +24,7 @@ namespace Goap
         {
             yield return null;
         }
-
-
+        
         public virtual bool TryDoAction()
         {
             if (!isGuaranteed)
