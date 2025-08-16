@@ -12,7 +12,7 @@ public abstract class TileContent : MonoBehaviour
         if(!Tile && GridManager.Instance.TryGetTile(transform.position, out Tile t))
             SetTile(t);
     }
-
+    
     public virtual void SetTile(Tile tile)
     {
         this.Tile = tile;

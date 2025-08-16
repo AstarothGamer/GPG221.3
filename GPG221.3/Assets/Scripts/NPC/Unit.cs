@@ -30,6 +30,7 @@ namespace NPC
             var moveTo = GridManager.Instance.Get(new Vector2Int(5, 4));
 
             yield return movement.GoToCoroutine(moveTo, 2, false, true, () => { Debug.Log("reached goal"); },
+            
                 () => { Debug.Log("path blocked"); });
             
             var moveTo2 = GridManager.Instance.Get(new Vector2Int(0, 0));

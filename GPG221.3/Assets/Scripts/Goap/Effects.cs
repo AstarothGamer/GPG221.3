@@ -4,5 +4,6 @@ namespace Goap
     public class Effect 
     {
         public string name;
+        public float value;
     }
 }
