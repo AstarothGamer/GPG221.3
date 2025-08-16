@@ -56,6 +56,18 @@ PrefabInstance:
       propertyPath: m_Name
       value: WaterTile
       objectReference: {fileID: 0}
+    - target: {fileID: 7322871488926926965, guid: b7509ecad3426b6438e4a047f677f484, type: 3}
+      propertyPath: m_Color.b
+      value: 0.745283
+      objectReference: {fileID: 0}
+    - target: {fileID: 7322871488926926965, guid: b7509ecad3426b6438e4a047f677f484, type: 3}
+      propertyPath: m_Color.g
+      value: 0.48865256
+      objectReference: {fileID: 0}
+    - target: {fileID: 7322871488926926965, guid: b7509ecad3426b6438e4a047f677f484, type: 3}
+      propertyPath: m_Color.r
+      value: 0.5741961
+      objectReference: {fileID: 0}
     - target: {fileID: 8006660474551805335, guid: b7509ecad3426b6438e4a047f677f484, type: 3}
       propertyPath: blockedColor.b
       value: 0.3301887

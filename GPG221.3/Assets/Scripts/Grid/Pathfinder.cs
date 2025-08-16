@@ -7,9 +7,17 @@ using UnityEngine;
 public class Pathfinder
 {
     // A* Pathfinding
-    public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile, 
-        bool includeStartTile = false, bool stopOneTileEarly = false)
+    public static List<Tile> FindPath(GridManager grid, Tile startTile, Tile endTile,
+        bool includeStartTile = false, bool stopOneTileEarly = false, bool ignoreCanStandOn = true, bool ignoreWalkable = false)
     {
+        if (!ignoreCanStandOn)
+        {
+            if (stopOneTileEarly && grid.GetAdjacentTiles(endTile.position).All(x => !x.CanStandOn))
+                return null;
+            if (!stopOneTileEarly && !endTile.CanStandOn)
+                return null;
+        }
+        
         Dictionary<Tile, PathfinderTileData> tileData = new();
         Heap<PathfinderTileData> openSet = new (grid.Count);
         HashSet<Tile> closedSet = new HashSet<Tile>();
@@ -28,10 +36,10 @@ public class Pathfinder
             
             foreach (Tile neighbour in grid.GetAdjacentTiles(currentTile.Original.position))
             {
-                if(stopOneTileEarly && neighbour == endTile)
+                if(stopOneTileEarly && neighbour == endTile && (ignoreCanStandOn || currentTile.Original.CanStandOn))
                     return RetracePath(currentTile, includeStartTile);
                 
-                if (!neighbour || !neighbour.IsWalkable || closedSet.Contains(neighbour))
+                if (!neighbour || (!ignoreWalkable && !neighbour.IsWalkable) || closedSet.Contains(neighbour))
                     continue;
                 int newMovementCostToNeighbour = currentTile.GCost + GetDistance(currentTile.Original, neighbour) 
                                                                    + (neighbour.Discovered ? 0 : 3);
@@ -151,7 +159,7 @@ public class Pathfinder
         
         public int HeapIndex { get; set; }
         public int CompareTo(DijkstraTileData other) 
-            => cost.CompareTo(other.cost);
+            => other.cost.CompareTo(cost);
     }
     
     class PathfinderTileData : IHeapItem<PathfinderTileData>

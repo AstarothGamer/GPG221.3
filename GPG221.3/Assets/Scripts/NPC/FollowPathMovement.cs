@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Sirenix.OdinInspector;
+using Sirenix.Utilities;
 using UnityEngine;
 
 namespace NPC
@@ -18,31 +19,45 @@ namespace NPC
             unit = GetComponent<Unit>();
         }
 
-        public void StartGoTo(Tile destination, float speed, bool stopAtAdjacent = false, 
-            bool findNewPathIfBlocked = true, Action targetReachedCallback = null, Action pathBlockedCallback = null)
+        public void StartGoTo(
+            Tile destination, 
+            float speed, 
+            bool stopAtAdjacent = false, 
+            bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, 
+            Action pathBlockedCallback = null)
         {
             StartCoroutine(GoToCoroutine(destination, speed, findNewPathIfBlocked, 
                 stopAtAdjacent, targetReachedCallback, pathBlockedCallback));
         }
 
-        public void StartFollowPath(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, Action pathBlockedCallback = null)
+        public void StartFollowPath(
+            List<Tile> path, 
+            float speed, 
+            bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, 
+            Action pathBlockedCallback = null)
         {
             StartCoroutine(FollowPathCoroutine(path, speed, findNewPathIfBlocked, 
                 targetReachedCallback, pathBlockedCallback));
         }
 
 
-        public IEnumerator GoToCoroutine(Tile destination, float speed, bool stopAtAdjacent = false, bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, Action pathBlockedCallback = null)
+        public IEnumerator GoToCoroutine(
+            Tile destination, 
+            float speed, 
+            bool stopAtAdjacent = false, 
+            bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, 
+            Action pathBlockedCallback = null)
         {
             var current = GridManager.Instance.Get(transform.position);
-            var path = Pathfinder.FindPath(GridManager.Instance, current, destination);
+            var path = Pathfinder.FindPath(GridManager.Instance, current, destination, 
+                                    includeStartTile: false, stopOneTileEarly: stopAtAdjacent);
 
-            if (path == null || path.Count == 0)
+            if (path.IsNullOrEmpty())
             {
-                unit?.SetTile(GridManager.Instance.Get(transform.position));
-                pathBlockedCallback?.Invoke();
+                yield return GoToNearestStandable(current, speed, pathBlockedCallback);
                 yield break;
             }
 
@@ -51,18 +66,24 @@ namespace NPC
         }
         
         [ShowInInspector, ReadOnly] List<Tile> currentPath; // for debug only
-        public IEnumerator FollowPathCoroutine(List<Tile> path, float speed, bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, Action pathBlockedCallback = null, Tile stopAtAdjacentIfFail = null)
+        public IEnumerator FollowPathCoroutine(
+            List<Tile> path, 
+            float speed, 
+            bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, 
+            Action pathBlockedCallback = null, 
+            Tile stopAtAdjacentIfFail = null, 
+            bool ignoreWalkable = false)
         {
-            if (path == null || path.Count == 0)
+            if (path.IsNullOrEmpty())
             {
                 Debug.LogWarning("Path is empty", this);
                 pathBlockedCallback?.Invoke();
                 yield break;
             }
             
-            unit?.SetTile(null);
-            currentPath = path;
+            unit?.SetTile(null); // Remove unit tile
+            currentPath = path; // Show path in the inspector
             
             int currentIndex = 0;
             var nextTilePos = path[currentIndex].transform.position;
@@ -80,15 +101,23 @@ namespace NPC
                     visionSource?.CheckVision(); // UPDATE FOG OF WAR
 
                     //Reached destination
-                    if (currentIndex == path.Count)
+                    if (currentIndex >= path.Count)
                     {
-                        unit?.SetTile(path.LastOrDefault());
+                        //Cannot stop on current destination
+                        if (path.LastOrDefault() && !path.LastOrDefault()!.CanStandOn)
+                        {
+                            yield return FindStandableTile(speed, findNewPathIfBlocked, 
+                                targetReachedCallback, pathBlockedCallback, stopAtAdjacentIfFail);
+                            yield break;
+                        }
+
+                        unit?.SetTile(path.LastOrDefault()); // Set unit tile
                         targetReachedCallback?.Invoke();
                         yield break;
                     }
-
+                    
                     //Path blocked
-                    if (!path[currentIndex] || !path[currentIndex].IsWalkable)
+                    if (!path[currentIndex] || (!ignoreWalkable && !path[currentIndex].IsWalkable))
                     {
                         if (findNewPathIfBlocked)
                         {
@@ -97,10 +126,8 @@ namespace NPC
                             yield break;
                         }
                         
-                        Debug.Log("Path blocked", this);
-                        unit?.SetTile(GridManager.Instance.Get(transform.position));
-                        
-                        pathBlockedCallback?.Invoke();
+                        yield return FindStandableTile(speed, findNewPathIfBlocked, 
+                            pathBlockedCallback, pathBlockedCallback, null);
                         yield break;
                     }
 
@@ -116,5 +143,77 @@ namespace NPC
 
             Debug.LogWarning("Something weird happened. Should not have reached this part of code", this);
         }
+
+        protected IEnumerator FindStandableTile(
+            float speed, 
+            bool findNewPathIfBlocked,
+            Action targetReachedCallback, 
+            Action pathBlockedCallback, 
+            Tile stopAtAdjacentIfPossible)
+        {
+            var currentTile = GridManager.Instance.Get(transform.position);
+            if (!stopAtAdjacentIfPossible)
+            {
+                // No available path
+                yield return GoToNearestStandable(currentTile, speed, pathBlockedCallback);
+                yield break;
+            }
+
+            // Find path to different neighbour of final tile
+            var newPath = Pathfinder.FindPath(GridManager.Instance, currentTile, stopAtAdjacentIfPossible,
+                includeStartTile: true, stopOneTileEarly: true, ignoreCanStandOn: false, ignoreWalkable: false);
+            if (!newPath.IsNullOrEmpty())
+            {
+                yield return FollowPathCoroutine(newPath, speed, findNewPathIfBlocked, 
+                    targetReachedCallback, pathBlockedCallback, stopAtAdjacentIfPossible, false);
+                yield break;
+            }
+
+            // No available path
+            yield return GoToNearestStandable(currentTile, speed, pathBlockedCallback);
+        }
+        
+        IEnumerator GoToNearestStandable(Tile currentTile, float speed, Action pathBlockedCallback)
+        {
+            if (TryGetPathToNearestStandable(currentTile, out List<Tile> path, out bool ignoreWalkable))
+            {
+                yield return FollowPathCoroutine(path, speed, false, 
+                    pathBlockedCallback, pathBlockedCallback, ignoreWalkable: ignoreWalkable);
+                yield break;
+            }
+            
+            Debug.Log("Path blocked", this);
+            unit?.SetTile(GridManager.Instance.Get(transform.position)); // Set unit tile
+        }
+
+        bool TryGetPathToNearestStandable(Tile currentTile, out List<Tile> path, out bool ignoreWalkable)
+        {
+            path = null;
+            ignoreWalkable = false;
+            var nearestStandable = Pathfinder.GetNearestTile(GridManager.Instance, currentTile, 
+                                                criteria: t => t.CanStandOn, ignoreWalkable: false);
+            
+            if (!nearestStandable) // if no standable tile nearby, retry ignoring walkable tiles
+            {
+                nearestStandable = Pathfinder.GetNearestTile(GridManager.Instance, currentTile, 
+                                                criteria: t => t.CanStandOn, ignoreWalkable: true);
+                if (nearestStandable)
+                {
+                    path = Pathfinder.FindPath(GridManager.Instance, currentTile, nearestStandable, 
+                        includeStartTile: true, stopOneTileEarly: false, ignoreCanStandOn: false, ignoreWalkable: true);
+                    ignoreWalkable = true;
+                }
+            }
+            else
+            {
+                path = Pathfinder.FindPath(GridManager.Instance, currentTile, nearestStandable, 
+                    includeStartTile: true, stopOneTileEarly: false, ignoreCanStandOn: false, ignoreWalkable: false);
+            }
+
+            if (path.IsNullOrEmpty())
+                return false;
+            return true;
+        }
+
     }
 }
