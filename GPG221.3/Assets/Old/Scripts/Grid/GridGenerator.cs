@@ -1,5 +1,6 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
+using Resource;
 
 public class GridGenerator : MonoBehaviour
 {
@@ -40,7 +41,9 @@ public class GridGenerator : MonoBehaviour
                 {
                     var t = Instantiate(treeTile, new Vector3(x, y), Quaternion.identity, transform);
                     t.name = $"Tree";
+                    ResourceManager.Instance.Resources[ResourceType.Tree].Add(t);
                     // Optionally add a tree content script or component here
+                    
                 }
                 else
                 {
