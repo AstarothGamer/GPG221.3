@@ -3,15 +3,15 @@ using Resource;
 
 namespace Goap
 {
-    public class Prerequisite : MonoBehaviour
+    public class Effect : MonoBehaviour
     {
-        public enum Kind { Named, ResourceAmount }
+        public enum Kind { Named, ResourceDelta }
         public Kind kind = Kind.Named;
 
         public string effectName;
 
         public ResourceType resourceType;
-        public int minAmount = 0;
+        public int amount = 0;
     }
 }
 

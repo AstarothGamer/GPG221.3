@@ -4,9 +4,9 @@ using UnityEngine;
 
 namespace Resource
 {
-    public class Tree : Resource
+    public class Wood : Resource
     {
-        public override ResourceType resourceType { get; protected set; } = ResourceType.Tree;
+        public override ResourceType resourceType { get; protected set; } = ResourceType.Wood;
         
         private float _stockPile;
         public override float StockPile

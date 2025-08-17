@@ -41,7 +41,7 @@ public class GridGenerator : MonoBehaviour
                 {
                     var t = Instantiate(treeTile, new Vector3(x, y), Quaternion.identity, transform);
                     t.name = $"Tree";
-                    ResourceManager.Instance.Resources[ResourceType.Tree].Add(t);
+                    ResourceManager.Instance.Resources[ResourceType.Wood].Add(t);
                     // Optionally add a tree content script or component here
                     
                 }

@@ -2,9 +2,9 @@ using UnityEngine;
 
 namespace Resource
 {
-    public class Water : Resource
+    public class Steel : Resource
     {
-        public override ResourceType resourceType { get; protected set; } = ResourceType.Water;
+        public override ResourceType resourceType { get; protected set; } = ResourceType.Steel;
         
         private float _stockPile;
         public override float StockPile
