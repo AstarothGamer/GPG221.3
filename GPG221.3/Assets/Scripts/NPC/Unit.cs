@@ -35,8 +35,8 @@ namespace NPC
 
             yield return Helpers.GetWait(.3f);
             
-            var moveTo2 = GridManager.Instance.Get(new Vector2Int(0, 0));
-            var path2 = Pathfinder.FindPath(GridManager.Instance, currentTile, moveTo2, false, true);
+            var moveTo2 = GridManager.Instance.Get(new Vector2Int(0, 1));
+            var path2 = Pathfinder.FindPath(GridManager.Instance, currentTile, moveTo2, false, false);
             
             yield return movement.FollowPathCoroutine(path2, 2, true, () => { Debug.Log("reached goal"); },
                 () => { Debug.Log("path blocked"); }, moveTo2);

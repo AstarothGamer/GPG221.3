@@ -31,7 +31,7 @@ public class Pathfinder
             var currentTile = openSet.RemoveFirst();
             closedSet.Add(currentTile.Original);
 
-            if (currentTile.Original == endTile)
+            if (currentTile.Original == endTile && (ignoreCanStandOn || currentTile.Original.CanStandOn))
                 return RetracePath(currentTile, includeStartTile);
             
             foreach (Tile neighbour in grid.GetAdjacentTiles(currentTile.Original.position))
