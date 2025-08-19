@@ -5,11 +5,11 @@ namespace Goap
 {
     public class WorldState : MonoBehaviour
     {
-        public List<Effect> receivedEffects;
+        public List<Effect> receivedEffects = new();
 
-        void Start()
-        {
-            receivedEffects.Add(new Effect { name = "Sleeping" });
-        }
+        public int wood;
+        public int stone;
+        public int steel;
+        public int food;
     }
 }
