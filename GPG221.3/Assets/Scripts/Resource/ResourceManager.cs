@@ -113,9 +113,9 @@ namespace Resource
     /// </summary>
     public enum ResourceType
     {
-        Tree,
+        Wood,
         Stone,
-        Water,
+        Steel,
         Food
     }
 }

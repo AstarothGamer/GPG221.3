@@ -7,14 +7,43 @@ namespace Goap
     public class GOAP : MonoBehaviour
     {
         public WorldState worldState;
-        public List<Action> actions;
+        public LocalState localState;
 
+        public string Goal;
+
+        public enum ResourceGoalScope
+        {
+            LocalBackpack,
+            WorldBase
+        }
+
+        public bool useResourceGoal = false;
+        public Resource.ResourceType goalResourceType;
+
+        public int goalMinAmount = 0;
+        public ResourceGoalScope resourceGoalScope = ResourceGoalScope.WorldBase;
+
+        public List<Action> actions;
         public List<Action> finalPlan;
         public List<Action> possibleActions;
         public List<Action> plan;
         public List<Action> failedActions = new();
 
-        [SerializeField] public string Goal;
+        private GridManager grid => GridManager.Instance;
+        private NPC.Unit unit;
+
+        void Awake()
+        {
+            if (!localState) localState = GetComponent<LocalState>();
+            if (!worldState)
+            {
+                if (BaseWarehouse.Instance)
+                    worldState = BaseWarehouse.Instance.GetComponent<WorldState>();
+                if (!worldState)
+                    worldState = FindObjectOfType<WorldState>();
+            }
+            unit = GetComponent<NPC.Unit>();
+        }
 
         void Start()
         {
@@ -24,18 +53,37 @@ namespace Goap
 
         public void CheckingActions()
         {
+            possibleActions ??= new List<Action>();
             possibleActions.Clear();
-            for (int i = 0; i < actions.Count; i++)
+
+            foreach (var a in actions)
             {
-                for (int e = 0; e < actions[i].effects.Count; e++)
+                if (!a) continue;
+
+                if (!useResourceGoal)
                 {
-                    if (actions[i].effects[e].name == Goal)
+                    foreach (var e in a.effects)
                     {
-                        if (!possibleActions.Contains(actions[i]))
+                        if (!e) continue;
+                        if (e.kind == Effect.Kind.Named && e.name == Goal)
+                        { possibleActions.Add(a); break; }
+                    }
+                }
+                else
+                {
+                    if (resourceGoalScope == ResourceGoalScope.LocalBackpack)
+                    {
+                        foreach (var e in a.effects)
                         {
-                            possibleActions.Add(actions[i]);
-                            break;
+                            if (!e) continue;
+                            if (e.kind == Effect.Kind.ResourceDelta && e.resourceType == goalResourceType && e.amount > 0)
+                            { possibleActions.Add(a); break; }
                         }
+                    }
+                    else 
+                    {
+                        if (a is BaseDepositAction dep && dep.TargetType == goalResourceType)
+                            possibleActions.Add(a);
                     }
                 }
             }
@@ -44,114 +92,153 @@ namespace Goap
 
         public void FinalPlan()
         {
+            finalPlan ??= new List<Action>();
             finalPlan.Clear();
-            int bestLength = int.MaxValue;
-            List<Action> bestPath = new();
 
-            for (int i = 0; i < possibleActions.Count; i++)
+            var startTile = unit?.currentTile ?? grid?.Get(transform.position);
+            if (!grid || startTile == null)
             {
-                if (failedActions.Contains(possibleActions[i]))
-                {
-                    continue;
-                }
+                Debug.LogError("GOAP: grid/Unit.currentTile not set");
+                return;
+            }
 
-                List<string> visited = new();
-                List<Action> currentPath = new();
+            float bestCost = float.PositiveInfinity;
+            List<Action> bestPath = null;
 
-                if (PlanPath(possibleActions[i], currentPath, visited))
+            foreach (var root in possibleActions)
+            {
+                if (!root || failedActions.Contains(root)) continue;
+
+                var visitedFacts = new HashSet<string>();
+                var tmpPath = new List<Action>();
+                if (PlanPath(root, startTile, tmpPath, out float cost, out Tile _)
+                    && cost < bestCost)
                 {
-                    if (currentPath.Count < bestLength)
-                    {
-                        bestLength = currentPath.Count;
-                        bestPath = currentPath;
-                    }
+                    bestCost = cost;
+                    bestPath = tmpPath;
                 }
             }
 
             if (bestPath != null)
             {
                 finalPlan = bestPath;
-                Debug.Log("final plan:");
-
-                for (int i = 0; i < finalPlan.Count; i++)
-                {
-                    Debug.Log(finalPlan[i].actionName);
-                }
-
                 StartCoroutine(ExecutePlanCoroutine());
             }
             else
             {
-                Debug.LogError("Goal can not be achieved");
+                Debug.LogError("Goal cannot be achieved (no valid cost path).");
             }
         }
 
-        public bool PlanPath(Action goapAction, List<Action> path, List<string> visited)
+        bool PlanPath(Action action, Tile startTile, List<Action> path,
+                      out float totalCost, out Tile endTile)
         {
-            for (int i = 0; i < goapAction.prerequisits.Count; i++)
+            totalCost = 0f;
+            endTile = startTile;
+
+            if (useResourceGoal && IsResourceGoalSatisfied())
+                return true;
+
+            foreach (var pre in action.prerequisits)
             {
-                for (int j = 0; j < visited.Count; j++)
+                bool satisfied = false;
+                if (pre.kind == Prerequisite.Kind.Named)
                 {
-                    if (visited[j] == goapAction.prerequisits[i].name)
+                    if (worldState != null)
+                        foreach (var we in worldState.receivedEffects)
+                            if (we && we.name == pre.name) { satisfied = true; break; }
+                }
+                else
+                {
+                    int haveLocal = pre.resourceType switch
                     {
-                        return false;
-                    }
+                        Resource.ResourceType.Wood  => localState.wood,
+                        Resource.ResourceType.Stone => localState.stone,
+                        Resource.ResourceType.Steel => localState.steel,
+                        Resource.ResourceType.Food  => localState.food,
+                        _ => 0
+                    };
+                    satisfied = haveLocal >= pre.minAmount;
                 }
 
-                bool hasEffect = false;
-                for (int j = 0; j < worldState.receivedEffects.Count; j++)
+                if (!satisfied)
                 {
-                    if (goapAction.prerequisits[i].name == worldState.receivedEffects[j].name)
-                    {
-                        hasEffect = true;
-                        break;
-                    }
-                }
+                    Action bestSub = null; float bestSubCost = float.PositiveInfinity;
+                    List<Action> bestSubPath = null; Tile bestSubEnd = endTile;
 
-                if (!hasEffect)
-                {
-                    Action subGoapAction = null;
-                    for (int a = 0; a < actions.Count; a++)
+                    foreach (var a in actions)
                     {
-                        if (failedActions.Contains(actions[a]))
+                        if (!a || failedActions.Contains(a)) continue;
+
+                        bool provides = false;
+                        foreach (var ef in a.effects)
                         {
-                            continue;
-                        }
-                    
-                        for (int e = 0; e < actions[a].effects.Count; e++)
-                        {
-                            if (actions[a].effects[e].name == goapAction.prerequisits[i].name)
+                            if (!ef) continue;
+                            if (pre.kind == Prerequisite.Kind.Named &&
+                                ef.kind == Effect.Kind.Named && ef.name == pre.name)
                             {
-                                subGoapAction = actions[a];
+                                provides = true;
+                                break;
+                            }
+                            if (pre.kind == Prerequisite.Kind.ResourceAmount &&
+                                ef.kind == Effect.Kind.ResourceDelta &&
+                                ef.resourceType == pre.resourceType && ef.amount > 0)
+                            {
+                                provides = true;
                                 break;
                             }
                         }
+                        if (!provides) continue;
 
-                        if (subGoapAction != null)
+                        var subPath = new List<Action>();
+                        if (PlanPath(a, endTile, subPath, out float subCost, out Tile subEnd)
+                            && subCost < bestSubCost)
                         {
-                            break;
+                            bestSub = a;
+                            bestSubCost = subCost;
+                            bestSubPath = subPath;
+                            bestSubEnd = subEnd;
                         }
                     }
 
-                    if (subGoapAction == null)
-                    {
-                        return false;
-                    }
+                    if (bestSub == null) return false;
 
-                    visited.Add(goapAction.prerequisits[i].name);
-
-                    if (!PlanPath(subGoapAction, path, visited))
-                    {
-                        return false;
-                    }
+                    path.AddRange(bestSubPath);
+                    totalCost += bestSubCost;
+                    endTile = bestSubEnd;
                 }
-
             }
 
-            path.Add(goapAction);
+            float selfCost = action.ComputeCost(grid, endTile);
+            if (float.IsInfinity(selfCost)) { totalCost = float.PositiveInfinity; return false; }
+
+            path.Add(action);
+            totalCost += selfCost;
+            endTile = action.PredictPostActionTile(grid, endTile);
             return true;
         }
-    
+
+        private bool IsResourceGoalSatisfied()
+        {
+            int have = resourceGoalScope == ResourceGoalScope.WorldBase
+                ? goalResourceType switch
+                {
+                    Resource.ResourceType.Wood  => worldState.wood,
+                    Resource.ResourceType.Stone => worldState.stone,
+                    Resource.ResourceType.Steel => worldState.steel,
+                    Resource.ResourceType.Food  => worldState.food,
+                    _ => 0
+                }
+                : goalResourceType switch
+                {
+                    Resource.ResourceType.Wood  => localState.wood,
+                    Resource.ResourceType.Stone => localState.stone,
+                    Resource.ResourceType.Steel => localState.steel,
+                    Resource.ResourceType.Food  => localState.food,
+                    _ => 0
+                };
+            return have >= goalMinAmount;
+        }
 
         private IEnumerator ExecutePlanCoroutine()
         {
@@ -159,25 +246,33 @@ namespace Goap
             {
                 for (int i = 0; i < finalPlan.Count; i++)
                 {
-                    Action currentGoapAction = finalPlan[i];
-                    yield return currentGoapAction.DoAction();
+                    var current = finalPlan[i];
+                    current.isGuaranteed = true;
 
-                    if (!currentGoapAction.wasSuccesful)
+                    if (!current.TryDoAction())
                     {
-                        Debug.LogError("Action " + currentGoapAction.actionName + " failed. Replanning.");
-
-                        if (!failedActions.Contains(currentGoapAction))
-                        {
-                            failedActions.Add(currentGoapAction);
-                        }
-
-                        yield return new WaitForSeconds(1f);
-
+                        if (!failedActions.Contains(current)) failedActions.Add(current);
+                        yield return new WaitForSeconds(0.05f);
                         CheckingActions();
                         yield break;
                     }
-                }
 
+                    yield return current.DoAction();
+
+                    if (!current.wasSuccesful)
+                    {
+                        if (!failedActions.Contains(current)) failedActions.Add(current);
+                        yield return new WaitForSeconds(0.05f);
+                        CheckingActions();
+                        yield break;
+                    }
+
+                    if (useResourceGoal && IsResourceGoalSatisfied())
+                    {
+                        finalPlan.Clear(); 
+                        break;
+                    }
+                }
                 Debug.Log("Finished executing plan.");
                 yield break;
             }
