@@ -19,37 +19,23 @@ namespace NPC
             unit = GetComponent<Unit>();
         }
 
-        public void StartGoTo(
-            Tile destination, 
-            float speed, 
-            bool stopAtAdjacent = false, 
-            bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, 
-            Action pathBlockedCallback = null)
+        public void StartGoTo(Tile destination, float speed = -1, bool stopAtAdjacent = false, 
+            bool findNewPathIfBlocked = true, Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
             StartCoroutine(GoToCoroutine(destination, speed, findNewPathIfBlocked, 
                 stopAtAdjacent, targetReachedCallback, pathBlockedCallback));
         }
 
-        public void StartFollowPath(
-            List<Tile> path, 
-            float speed, 
-            bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, 
-            Action pathBlockedCallback = null)
+        public void StartFollowPath(List<Tile> path, float speed = -1, bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
             StartCoroutine(FollowPathCoroutine(path, speed, findNewPathIfBlocked, 
                 targetReachedCallback, pathBlockedCallback));
         }
 
 
-        public IEnumerator GoToCoroutine(
-            Tile destination, 
-            float speed, 
-            bool stopAtAdjacent = false, 
-            bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, 
-            Action pathBlockedCallback = null)
+        public IEnumerator GoToCoroutine(Tile destination, float speed = -1, bool stopAtAdjacent = false, bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, Action pathBlockedCallback = null)
         {
             var current = GridManager.Instance.Get(transform.position);
             var path = Pathfinder.FindPath(GridManager.Instance, current, destination, 
@@ -66,20 +52,22 @@ namespace NPC
         }
         
         [ShowInInspector, ReadOnly] List<Tile> currentPath; // for debug only
-        public IEnumerator FollowPathCoroutine(
-            List<Tile> path, 
-            float speed, 
-            bool findNewPathIfBlocked = true,
-            Action targetReachedCallback = null, 
-            Action pathBlockedCallback = null, 
-            Tile stopAtAdjacentIfFail = null, 
-            bool ignoreWalkable = false)
+        public IEnumerator FollowPathCoroutine(List<Tile> path, float speed = -1, bool findNewPathIfBlocked = true,
+            Action targetReachedCallback = null, Action pathBlockedCallback = null, 
+            Tile stopAtAdjacentIfFail = null, bool ignoreWalkable = false)
         {
             if (path.IsNullOrEmpty())
             {
                 Debug.LogWarning("Path is empty", this);
                 pathBlockedCallback?.Invoke();
                 yield break;
+            }
+
+            if (speed <= 0)
+            {
+                if (!unit)
+                    Debug.LogWarning("Tried to move using default unit speed, but there is no unit attached", this);
+                speed = unit?.moveSpeed ?? 1;
             }
             
             unit?.SetTile(null); // Remove unit tile

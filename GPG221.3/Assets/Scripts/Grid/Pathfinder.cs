@@ -62,17 +62,17 @@ public class Pathfinder
         return null;
     }
 
-    private static List<Tile> RetracePath(PathfinderTileData endTile, bool includeStartTile)
+    private static List<Tile> RetracePath<T>(IRetraceable<T> endTile, bool includeStartTile) where T : IRetraceable<T>
     {
         List<Tile> path = new List<Tile>();
-        PathfinderTileData currentTile = endTile;
+        IRetraceable<T> currentTile = endTile;
         
         do 
         {
             path.Add(currentTile.Original);
             currentTile = currentTile.Parent;
         } 
-        while (currentTile?.Parent != null);
+        while (currentTile != null && currentTile.Parent != null);
         
         if (includeStartTile && currentTile != null)
             path.Add(currentTile.Original);
@@ -99,15 +99,42 @@ public class Pathfinder
         {
             var current =  queue.RemoveFirst();
             
-            if(criteria.Invoke(current.tile))
-                return current.tile;
+            if(criteria.Invoke(current.Original))
+                return current.Original;
 
-            foreach (Tile neighbour in grid.GetAdjacentTiles(current.tile.position))
+            foreach (Tile neighbour in grid.GetAdjacentTiles(current.Original.position))
             {
                 if (!visited.Contains(neighbour) && (ignoreWalkable || neighbour.IsWalkable))
                 {
                     visited.Add(neighbour);
-                    queue.Add(new DijkstraTileData(neighbour, current.cost + GetDistance(current.tile, neighbour)));
+                    queue.Add(new DijkstraTileData(neighbour, current.cost + GetDistance(current.Original, neighbour)));
+                }
+            }
+        }
+        return null;
+    }
+    
+    //Dijkstra to nearest tile of a certain type, and return the path to it
+    public static List<Tile> FindPathToNearest(GridManager grid, Tile startTile, Func<Tile, bool> criteria,
+        bool ignoreWalkable = false)
+    {
+        Heap<DijkstraTileData> queue = new(Mathf.CeilToInt(grid.Count * .7f));
+        queue.Add(new DijkstraTileData(startTile, 0));
+        HashSet<Tile> visited = new() { startTile };
+
+        while (queue.Count > 0)
+        {
+            var current =  queue.RemoveFirst();
+
+            if (criteria.Invoke(current.Original))
+                return RetracePath(current, false);
+
+            foreach (Tile neighbour in grid.GetAdjacentTiles(current.Original.position))
+            {
+                if (!visited.Contains(neighbour) && (ignoreWalkable || neighbour.IsWalkable))
+                {
+                    visited.Add(neighbour);
+                    queue.Add(new DijkstraTileData(neighbour, current.cost + GetDistance(current.Original, neighbour), current));
                 }
             }
         }
@@ -146,15 +173,17 @@ public class Pathfinder
 
 
 
-    class DijkstraTileData : IHeapItem<DijkstraTileData>
+    class DijkstraTileData : IHeapItem<DijkstraTileData>, IRetraceable<DijkstraTileData>
     {
-        public Tile tile;
         public float cost;
+        public Tile Original { get; set; }
+        public DijkstraTileData Parent { get; set; }
 
-        public DijkstraTileData(Tile tile, float cost)
+        public DijkstraTileData(Tile original, float cost, DijkstraTileData parent = null)
         {
-            this.tile = tile;
+            this.Original = original;
             this.cost = cost;
+            this.Parent = parent;
         }
         
         public int HeapIndex { get; set; }
@@ -162,15 +191,15 @@ public class Pathfinder
             => other.cost.CompareTo(cost);
     }
     
-    class PathfinderTileData : IHeapItem<PathfinderTileData>
+    class PathfinderTileData : IHeapItem<PathfinderTileData>, IRetraceable<PathfinderTileData>
     {
         public int HeapIndex { get; set; }
         public int GCost;
         public int HCost;
         public int FCost => GCost + HCost;
 
-        public readonly Tile Original;
-        public PathfinderTileData Parent;
+        public Tile Original { get; set; }
+        public PathfinderTileData Parent { get; set; }
 
         public PathfinderTileData(Tile tile, int gCost, int hCost, PathfinderTileData parent)
         {
@@ -187,5 +216,11 @@ public class Pathfinder
                 compare = HCost.CompareTo(other.HCost);
             return -compare;
         }
+    }
+
+    interface IRetraceable<T> where T : IRetraceable<T>
+    {
+        public Tile Original { get; set; }
+        public T Parent { get; set; }
     }
 }
