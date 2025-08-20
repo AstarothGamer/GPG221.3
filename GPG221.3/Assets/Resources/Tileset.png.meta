@@ -97,7 +97,7 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Tileset_0
+      name: TileSelectionOuter
       rect:
         serializedVersion: 2
         x: 1
@@ -105,7 +105,7 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -118,7 +118,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tileset_1
+      name: Tile
       rect:
         serializedVersion: 2
         x: 18
@@ -126,7 +126,7 @@ TextureImporter:
         width: 16
         height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -139,15 +139,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tileset_2
+      name: TileSelectionInner
       rect:
         serializedVersion: 2
         x: 35
-        y: 48
-        width: 15
-        height: 15
+        y: 47
+        width: 16
+        height: 16
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -160,49 +160,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tileset_3
-      rect:
-        serializedVersion: 2
-        x: 18
-        y: 30
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: d56b0194afb89414e9e4b636c0c2fceb
-      internalID: 1858126633
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tileset_4
-      rect:
-        serializedVersion: 2
-        x: 35
-        y: 30
-        width: 16
-        height: 16
-      alignment: 0
-      pivot: {x: 0, y: 0}
-      border: {x: 0, y: 0, z: 0, w: 0}
-      outline: []
-      physicsShape: []
-      tessellationDetail: 0
-      bones: []
-      spriteID: dc2373419867b6843b0d664e6ca5572e
-      internalID: -1142974607
-      vertices: []
-      indices: 
-      edges: []
-      weights: []
-    - serializedVersion: 2
-      name: Tileset_5
+      name: PathDirection
       rect:
         serializedVersion: 2
         x: 53
@@ -223,7 +181,7 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tileset_6
+      name: PathDestination
       rect:
         serializedVersion: 2
         x: 57
@@ -231,7 +189,7 @@ TextureImporter:
         width: 6
         height: 6
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -244,15 +202,15 @@ TextureImporter:
       edges: []
       weights: []
     - serializedVersion: 2
-      name: Tileset_7
+      name: AMOGUS
       rect:
         serializedVersion: 2
         x: 5
-        y: 17
+        y: 21
         width: 8
         height: 8
       alignment: 0
-      pivot: {x: 0, y: 0}
+      pivot: {x: 0.5, y: 0.5}
       border: {x: 0, y: 0, z: 0, w: 0}
       outline: []
       physicsShape: []
@@ -260,6 +218,90 @@ TextureImporter:
       bones: []
       spriteID: 444eedfec55ddc542b3783805a3150c5
       internalID: -1525792041
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ResourceSteel
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 32
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: f587604268aad044faa6777eeec6c290
+      internalID: 929484296
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ResourceWood
+      rect:
+        serializedVersion: 2
+        x: 16
+        y: 32
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 48bdc473ceb84e54796b7c5b8386f944
+      internalID: 1528058011
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ResourceStone
+      rect:
+        serializedVersion: 2
+        x: 29
+        y: 32
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 4b561e63f6992d7419e4b5ad6967f607
+      internalID: -70480432
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ResourceFood
+      rect:
+        serializedVersion: 2
+        x: 42
+        y: 32
+        width: 12
+        height: 12
+      alignment: 0
+      pivot: {x: 0, y: 0}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      outline: []
+      physicsShape: []
+      tessellationDetail: 0
+      bones: []
+      spriteID: 749a1e3f593b7e041bfd9a831d35e51c
+      internalID: 634166154
       vertices: []
       indices: 
       edges: []
@@ -275,14 +317,18 @@ TextureImporter:
     weights: []
     secondaryTextures: []
     nameFileIdTable:
-      Tileset_0: 208488050
-      Tileset_1: 1341831184
-      Tileset_2: -1309811272
+      AMOGUS: -1525792041
+      PathDestination: -1695541766
+      PathDirection: 1677326598
+      ResourceFood: 634166154
+      ResourceSteel: 929484296
+      ResourceStone: -70480432
+      ResourceWood: 1528058011
+      Tile: 1341831184
+      TileSelectionInner: -1309811272
+      TileSelectionOuter: 208488050
       Tileset_3: 1858126633
       Tileset_4: -1142974607
-      Tileset_5: 1677326598
-      Tileset_6: -1695541766
-      Tileset_7: -1525792041
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

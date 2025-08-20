@@ -25,8 +25,8 @@ namespace NPC
         {
             if (!currentTile)
                 GridManager.Instance.Get(transform.position)?.SetUnit(this);
-        
-            // test
+            yield return null;
+            /*// test
             if(!testMovement) yield break;
             var moveTo = GridManager.Instance.Get(new Vector2Int(13, 1));
 
@@ -34,13 +34,13 @@ namespace NPC
                 () => { Debug.Log("path blocked"); });
 
             yield return Helpers.GetWait(.3f);
-            
+
             var moveTo2 = GridManager.Instance.Get(new Vector2Int(0, 1));
             var path2 = Pathfinder.FindPath(GridManager.Instance, currentTile, moveTo2, false, false);
-            
+
             yield return movement.FollowPathCoroutine(path2, 2, true, () => { Debug.Log("reached goal"); },
                 () => { Debug.Log("path blocked"); }, moveTo2);
-            /////////
+            /////////*/
         }
         private void OnDestroy()
         {

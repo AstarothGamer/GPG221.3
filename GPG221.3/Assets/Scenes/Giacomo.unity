@@ -515,6 +515,10 @@ GameObject:
   - component: {fileID: 111394251}
   - component: {fileID: 111394250}
   - component: {fileID: 111394249}
+  - component: {fileID: 111394257}
+  - component: {fileID: 111394256}
+  - component: {fileID: 111394255}
+  - component: {fileID: 111394254}
   m_Layer: 0
   m_Name: Main NPC
   m_TagString: Untagged
@@ -630,6 +634,91 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &111394254
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111394248}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1b7e5ea387e8f5445b96885ff51bee62, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  receivedEffects: []
+  wood: 0
+  stone: 0
+  steel: 0
+  food: 0
+--- !u!114 &111394255
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111394248}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1246906fe9e094361b59c59725b7bb0d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  receivedEffects: []
+  wood: 0
+  stone: 0
+  steel: 0
+  food: 0
+  woodMax: 20
+  stoneMax: 20
+  steelMax: 20
+  foodMax: 20
+--- !u!114 &111394256
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111394248}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5e54cf2e171c17a49bc2bf41a7a807d4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  currentActionText: {fileID: 0}
+  actionName: Explore
+  worldState: {fileID: 0}
+  localState: {fileID: 0}
+  prerequisits: []
+  effects: []
+  targetPosition: {fileID: 0}
+  isGuaranteed: 0
+  isMoving: 0
+  wasSuccesful: 0
+--- !u!114 &111394257
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 111394248}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7db73a7dcee36e745bb70c65f695302e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  worldState: {fileID: 111394254}
+  localState: {fileID: 111394255}
+  Goal: Explore
+  useResourceGoal: 0
+  goalResourceType: 0
+  goalMinAmount: 0
+  resourceGoalScope: 1
+  actions:
+  - {fileID: 111394256}
+  finalPlan: []
+  possibleActions: []
+  plan: []
+  failedActions: []
 --- !u!1 &133290300
 GameObject:
   m_ObjectHideFlags: 0
@@ -2275,8 +2364,10 @@ MonoBehaviour:
   resetOnStart: 0
   tile: {fileID: 8514809137068086366, guid: 542940cdf3784a74db424144f665ea12, type: 3}
   obstacleTile: {fileID: 716778035634974278, guid: 52b756ae517c21547abd22d71ed8f977, type: 3}
+  treeTile: {fileID: 0}
   size: {x: 40, y: 40}
   obstacleChance: 30
+  treeChance: 2
 --- !u!4 &473997641
 Transform:
   m_ObjectHideFlags: 0
