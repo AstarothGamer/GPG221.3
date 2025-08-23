@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using NPC;
+using Sirenix.Utilities;
 
 namespace Goap
 {
@@ -32,19 +33,17 @@ namespace Goap
         public override IEnumerator DoAction()
         {
             wasSuccesful = false;
-            if (!BaseWarehouse.Instance || !BaseWarehouse.Instance.entryTile) yield break;
             if (!GridManager.Instance) yield break;
 
             var start = GridManager.Instance.Get(transform.position);
             if (!start) yield break;
-
+            var path = Pathfinder.FindPathToNearest(GridManager.Instance, start, x => !x.Discovered);
+            if (path.IsNullOrEmpty()) yield break;
+            
             isMoving = true;
-            bool reached = false, blocked = false;
-            yield return mover.GoToCoroutine(BaseWarehouse.Instance.entryTile, 
-                targetReachedCallback: () => reached = true, pathBlockedCallback: () => blocked = true);
+            yield return mover.FollowPathCoroutine(path, findNewPathIfBlocked: false);
             isMoving = false;
-
-            if (blocked) yield break;
+            
             wasSuccesful = true;
         }
     }
