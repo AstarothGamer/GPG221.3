@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using NPC; 
+using NPC;
 using Resource;
 
 namespace Goap
@@ -25,17 +25,58 @@ namespace Goap
             mover = GetComponent<FollowPathMovement>();
             unit  = GetComponent<Unit>();
 
+            prerequisits ??= new List<Prerequisite>();
+            string knownFact = WorldState.KnownFactName(TargetType);
+            bool hasKnown = false;
+            foreach (var p in prerequisits)
+                if (p != null && p.kind == PrereqKind.Named && p.name == knownFact)
+                {
+                    hasKnown = true;
+                    break;
+                }
+                
+            if (!hasKnown)
+            {
+                prerequisits.Add(new Prerequisite
+                {
+                    kind = PrereqKind.Named,
+                    name = knownFact
+                });
+            }
+
+            effects ??= new List<Effect>();
             bool hasDelta = false;
             foreach (var e in effects)
-                if (e && e.kind == Effect.Kind.ResourceDelta && e.resourceType == TargetType && e.amount > 0)
+                if (e != null && e.kind == EffectKind.ResourceDelta && e.resourceType == TargetType && e.amount > 0)
                 { hasDelta = true; break; }
             if (!hasDelta)
             {
-                var e = gameObject.AddComponent<Effect>();
-                e.kind = Effect.Kind.ResourceDelta;
-                e.resourceType = TargetType;
-                e.amount = amountPerTrip;
-                effects.Add(e);
+                effects.Add(new Effect
+                {
+                    kind = EffectKind.ResourceDelta,
+                    resourceType = TargetType,
+                    amount = Mathf.Max(1, amountPerTrip)
+                });
+            }
+        }
+
+        public override void ApplyEffects()
+        {
+            if (effects == null || worldState == null) return;
+            foreach (var e in effects)
+            {
+                if (e == null || e.kind != EffectKind.Named) continue;
+
+                bool already = false;
+                foreach (var we in worldState.receivedEffects)
+                    if (we != null && we.kind == EffectKind.Named && we.name == e.name)
+                    {
+                        already = true;
+                        break;
+                    }
+
+                if (!already)
+                    worldState.receivedEffects.Add(new Effect { kind = EffectKind.Named, name = e.name });
             }
         }
 
@@ -65,12 +106,28 @@ namespace Goap
 
             if (!g || startTile == null) return float.PositiveInfinity;
 
+            List<Tile> known = TargetType switch
+            {
+                ResourceType.Wood  => worldState?.knownWoodTiles,
+                ResourceType.Stone => worldState?.knownStoneTiles,
+                ResourceType.Steel => worldState?.knownSteelTiles,
+                ResourceType.Food  => worldState?.knownFoodTiles,
+                _ => null
+            };
+            if (known == null || known.Count == 0)
+            {
+                Debug.Log("dont have any known tiles with resources");
+                return float.PositiveInfinity;
+            }
+
+            var knownSet = new HashSet<Tile>(known);
             var all = Object.FindObjectsOfType<Resource.Resource>();
             foreach (var r in all)
             {
                 if (!r || r.resourceType != TargetType) continue;
                 if (r.StockPile <= 0) continue;
                 if (r.Tile == null || !r.Tile.Discovered) continue;
+                if (!knownSet.Contains(r.Tile)) continue;
                 if (ResourceReservationService.IsReserved(r)) continue;
 
                 Tile bestAdj = null;
@@ -81,7 +138,11 @@ namespace Goap
                     var path = Pathfinder.FindPath(g, startTile, adj);
                     if (path == null) continue;
                     int cost = path.Count;
-                    if (cost < bestCost) { bestCost = cost; bestAdj = adj; }
+                    if (cost < bestCost)
+                    {
+                        bestCost = cost;
+                        bestAdj = adj;
+                    }
                 }
 
                 if (bestAdj != null && bestCost < cachedPathCost)
@@ -102,6 +163,7 @@ namespace Goap
 
         public override IEnumerator DoAction()
         {
+            Debug.Log("Getting resources");
             wasSuccesful = false;
             if (!grid) yield break;
 
@@ -111,8 +173,7 @@ namespace Goap
             var cost = ComputeCost(grid, startTile);
             if (float.IsInfinity(cost) || cachedRes == null || cachedAdjTile == null) yield break;
 
-            if (!ResourceReservationService.TryReserve(cachedRes, this))
-                yield break;
+            if (!ResourceReservationService.TryReserve(cachedRes, this)) yield break;
 
             bool reached = false, blocked = false;
             mover.StartGoTo(cachedAdjTile, unit ? unit.moveSpeed : 6f, false, true,
@@ -122,13 +183,7 @@ namespace Goap
             while (!reached && !blocked) yield return null;
             isMoving = false;
 
-            if (blocked)
-            {
-                ResourceReservationService.Release(cachedRes, this);
-                yield break;
-            }
-
-            if (!cachedRes || cachedRes.Tile == null || cachedRes.StockPile <= 0)
+            if (blocked || !cachedRes || cachedRes.Tile == null || cachedRes.StockPile <= 0)
             {
                 ResourceReservationService.Release(cachedRes, this);
                 yield break;
@@ -152,6 +207,7 @@ namespace Goap
             };
             int space = Mathf.Max(0, cap - before);
             int willTake = Mathf.Clamp(amountPerTrip, 0, space);
+
             if (willTake <= 0)
             {
                 ResourceReservationService.Release(cachedRes, this);
@@ -175,12 +231,12 @@ namespace Goap
                     localState.food  = Mathf.Clamp(localState.food  + willTake, 0, localState.foodMax);
                     break;
             }
+            yield return new WaitForSeconds(2f);
 
-            ApplyEffects(); 
+            ApplyEffects();
 
             ResourceReservationService.Release(cachedRes, this);
             wasSuccesful = true;
         }
     }
 }
-

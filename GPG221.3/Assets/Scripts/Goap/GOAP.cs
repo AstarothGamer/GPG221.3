@@ -64,9 +64,12 @@ namespace Goap
                 {
                     foreach (var e in a.effects)
                     {
-                        if (!e) continue;
-                        if (e.kind == Effect.Kind.Named && e.name == Goal)
-                        { possibleActions.Add(a); break; }
+                        if (e == null) continue;
+                        if (e.kind == EffectKind.Named && e.name == Goal)
+                        {
+                            possibleActions.Add(a);
+                            break;
+                        }
                     }
                 }
                 else
@@ -75,9 +78,12 @@ namespace Goap
                     {
                         foreach (var e in a.effects)
                         {
-                            if (!e) continue;
-                            if (e.kind == Effect.Kind.ResourceDelta && e.resourceType == goalResourceType && e.amount > 0)
-                            { possibleActions.Add(a); break; }
+                            if (e == null) continue;
+                            if (e.kind == EffectKind.ResourceDelta && e.resourceType == goalResourceType && e.amount > 0)
+                            {
+                                possibleActions.Add(a);
+                                break;
+                            }
                         }
                     }
                     else 
@@ -107,9 +113,8 @@ namespace Goap
 
             foreach (var root in possibleActions)
             {
-                if (!root || failedActions.Contains(root)) continue;
+                if (root == null || failedActions.Contains(root)) continue;
 
-                var visitedFacts = new HashSet<string>();
                 var tmpPath = new List<Action>();
                 if (PlanPath(root, startTile, tmpPath, out float cost, out Tile _)
                     && cost < bestCost)
@@ -123,11 +128,24 @@ namespace Goap
             {
                 finalPlan = bestPath;
                 StartCoroutine(ExecutePlanCoroutine());
+                return; // критично: не перетирать план разведкой
             }
-            else
+
+            // Фолбэк на разведку — ТОЛЬКО если плана нет
+            var explore = actions.Find(a => a is ExploreAction);
+            if (explore != null)
             {
-                Debug.LogError("Goal cannot be achieved (no valid cost path).");
+                var explorePath = new List<Action>();
+                if (PlanPath(explore, startTile, explorePath, out float expCost, out Tile _)
+                    && !float.IsInfinity(expCost))
+                {
+                    finalPlan = explorePath;
+                    StartCoroutine(ExecutePlanCoroutine());
+                    return;
+                }
             }
+
+            Debug.LogWarning("GOAP: no plan and no explore fallback available.");
         }
 
         bool PlanPath(Action action, Tile startTile, List<Action> path,
@@ -137,16 +155,24 @@ namespace Goap
             endTile = startTile;
 
             if (useResourceGoal && IsResourceGoalSatisfied())
+            {
+                Debug.Log("Resource goal satisf");
                 return true;
+            }
+                
 
             foreach (var pre in action.prerequisits)
             {
                 bool satisfied = false;
-                if (pre.kind == Prerequisite.Kind.Named)
+                if (pre.kind == PrereqKind.Named)
                 {
                     if (worldState != null)
                         foreach (var we in worldState.receivedEffects)
-                            if (we && we.name == pre.name) { satisfied = true; break; }
+                            if (we != null && we.name == pre.name)
+                            {
+                                satisfied = true;
+                                break;
+                            }
                 }
                 else
                 {
@@ -163,8 +189,10 @@ namespace Goap
 
                 if (!satisfied)
                 {
-                    Action bestSub = null; float bestSubCost = float.PositiveInfinity;
-                    List<Action> bestSubPath = null; Tile bestSubEnd = endTile;
+                    Action bestSub = null;
+                    float bestSubCost = float.PositiveInfinity;
+                    List<Action> bestSubPath = null;
+                    Tile bestSubEnd = endTile;
 
                     foreach (var a in actions)
                     {
@@ -173,15 +201,17 @@ namespace Goap
                         bool provides = false;
                         foreach (var ef in a.effects)
                         {
-                            if (!ef) continue;
-                            if (pre.kind == Prerequisite.Kind.Named &&
-                                ef.kind == Effect.Kind.Named && ef.name == pre.name)
+                            if (ef == null) continue;
+
+                            if (pre.kind == PrereqKind.Named &&
+                                ef.kind == EffectKind.Named && ef.name == pre.name)
                             {
                                 provides = true;
                                 break;
                             }
-                            if (pre.kind == Prerequisite.Kind.ResourceAmount &&
-                                ef.kind == Effect.Kind.ResourceDelta &&
+
+                            if (pre.kind == PrereqKind.ResourceAmount &&
+                                ef.kind == EffectKind.ResourceDelta &&
                                 ef.resourceType == pre.resourceType && ef.amount > 0)
                             {
                                 provides = true;
@@ -210,7 +240,11 @@ namespace Goap
             }
 
             float selfCost = action.ComputeCost(grid, endTile);
-            if (float.IsInfinity(selfCost)) { totalCost = float.PositiveInfinity; return false; }
+            if (float.IsInfinity(selfCost))
+            {
+                totalCost = float.PositiveInfinity;
+                return false;
+            }
 
             path.Add(action);
             totalCost += selfCost;
@@ -274,6 +308,10 @@ namespace Goap
                     }
                 }
                 Debug.Log("Finished executing plan.");
+                if (!IsResourceGoalSatisfied())
+                {
+                    CheckingActions();
+                }
                 yield break;
             }
         }

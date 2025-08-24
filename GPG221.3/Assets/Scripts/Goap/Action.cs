@@ -12,8 +12,8 @@ namespace Goap
         public string actionName;
 
         public WorldState worldState;
-
         public LocalState localState;
+
         public List<Prerequisite> prerequisits = new();
         public List<Effect> effects = new();
 
@@ -34,7 +34,10 @@ namespace Goap
             }
         }
 
-        public virtual IEnumerator DoAction() { yield return null; }
+        public virtual IEnumerator DoAction()
+        {
+            yield return null;
+        }
 
         public virtual bool TryDoAction()
         {
@@ -42,22 +45,36 @@ namespace Goap
 
             foreach (var p in prerequisits)
             {
-                if (!p) continue;
+                if (p == null) continue;
 
-                if (p.kind == Prerequisite.Kind.Named)
+                if (p.kind == PrereqKind.Named)
                 {
                     bool has = false;
                     if (worldState != null)
+                    {
                         foreach (var eff in worldState.receivedEffects)
-                            if (eff && eff.name == p.name) { has = true; break; }
+                        {
+                            if (eff != null && eff.kind == EffectKind.Named && eff.name == p.name)
+                            {
+                                has = true;
+                                break;
+                            }
+                        }
+                    }
                     if (!has)
-                    { currentActionText?.SetText($"I cannot do {actionName}, missing {p.name}."); return false; }
+                    {
+                        currentActionText?.SetText($"I cannot do {actionName}, missing {p.name}.");
+                        return false;
+                    }
                 }
-                else
+                else 
                 {
                     int have = GetAmount(localState, p.resourceType);
                     if (have < p.minAmount)
-                    { currentActionText?.SetText($"I need {p.minAmount} {p.resourceType}, have {have}."); return false; }
+                    {
+                        currentActionText?.SetText($"I need {p.minAmount} {p.resourceType}, have {have}.");
+                        return false;
+                    }
                 }
             }
             return true;
@@ -67,25 +84,37 @@ namespace Goap
         {
             foreach (var e in effects)
             {
-                if (!e) continue;
+                if (e == null) continue;
 
-                if (e.kind == Effect.Kind.Named)
+                if (e.kind == EffectKind.Named)
                 {
-                    bool already = false;
                     if (worldState != null)
                     {
+                        bool already = false;
                         foreach (var we in worldState.receivedEffects)
-                            if (we && we.name == e.name) { already = true; break; }
-                        if (!already) worldState.receivedEffects.Add(e);
+                        {
+                            if (we != null && we.kind == EffectKind.Named && we.name == e.name)
+                            { already = true; break; }
+                        }
+                        if (!already)
+                        {
+                            worldState.receivedEffects.Add(new Effect
+                            {
+                                kind = EffectKind.Named,
+                                name = e.name
+                            });
+                        }
                     }
                 }
-                else AddAmount(localState, e.resourceType, e.amount);
+                else 
+                {
+                    AddAmount(localState, e.resourceType, e.amount);
+                }
             }
         }
 
         public virtual float ComputeCost(GridManager grid, Tile startTile) => 1f;
-
-        public virtual Tile PredictPostActionTile(GridManager grid, Tile startTile) => startTile;
+        public virtual Tile  PredictPostActionTile(GridManager grid, Tile startTile) => startTile;
 
         protected static int GetAmount(LocalState ls, ResourceType t) => t switch
         {
@@ -97,21 +126,12 @@ namespace Goap
         };
         protected static void AddAmount(LocalState ls, ResourceType t, int delta)
         {
-            if (delta == 0) return;
             switch (t)
             {
-                case ResourceType.Wood:
-                    ls.wood  = Mathf.Clamp(ls.wood  + delta, 0, ls.woodMax);
-                    break;
-                case ResourceType.Stone:
-                    ls.stone = Mathf.Clamp(ls.stone + delta, 0, ls.stoneMax);
-                    break;
-                case ResourceType.Steel:
-                    ls.steel = Mathf.Clamp(ls.steel + delta, 0, ls.steelMax);
-                    break;
-                case ResourceType.Food:
-                    ls.food  = Mathf.Clamp(ls.food  + delta, 0, ls.foodMax);
-                    break;
+                case ResourceType.Wood:  ls.wood  = Mathf.Clamp(ls.wood  + delta, 0, ls.woodMax);  break;
+                case ResourceType.Stone: ls.stone = Mathf.Clamp(ls.stone + delta, 0, ls.stoneMax); break;
+                case ResourceType.Steel: ls.steel = Mathf.Clamp(ls.steel + delta, 0, ls.steelMax); break;
+                case ResourceType.Food:  ls.food  = Mathf.Clamp(ls.food  + delta, 0, ls.foodMax);  break;
             }
         }
     }

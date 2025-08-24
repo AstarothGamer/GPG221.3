@@ -43,7 +43,6 @@ public class GridGenerator : MonoBehaviour
                     t.name = $"Tree";
                     ResourceManager.Instance.Resources[ResourceType.Wood].Add(t);
                     // Optionally add a tree content script or component here
-                    
                 }
                 else
                 {

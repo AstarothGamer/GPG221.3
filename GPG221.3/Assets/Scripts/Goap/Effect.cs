@@ -3,15 +3,21 @@ using Resource;
 
 namespace Goap
 {
-    public class Effect : MonoBehaviour
+    public enum EffectKind
     {
-        public enum Kind { Named, ResourceDelta }
-        public Kind kind = Kind.Named;
+        Named,
+        ResourceDelta
+    }
 
-        public string effectName;
+    [System.Serializable]
+    public class Effect
+    {
+        public EffectKind kind = EffectKind.Named;
+
+        public string name;
 
         public ResourceType resourceType;
-        public int amount = 0;
+        public int amount;
     }
 }
 

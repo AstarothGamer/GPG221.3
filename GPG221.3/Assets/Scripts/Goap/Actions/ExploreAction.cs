@@ -2,6 +2,7 @@ using System.Collections;
 using UnityEngine;
 using NPC;
 using Sirenix.Utilities;
+using System.Collections.Generic;
 
 namespace Goap
 {
@@ -9,12 +10,13 @@ namespace Goap
     {
         private FollowPathMovement mover;
         private Unit unit;
+        private VisionSource vision;
 
         protected override void Awake()
         {
             base.Awake();
             mover = GetComponent<FollowPathMovement>();
-            unit  = GetComponent<Unit>();
+            unit = GetComponent<Unit>();
         }
 
         public override float ComputeCost(GridManager g, Tile startTile)
@@ -43,6 +45,26 @@ namespace Goap
             isMoving = true;
             yield return mover.FollowPathCoroutine(path, findNewPathIfBlocked: false);
             isMoving = false;
+
+            if (worldState != null)
+            {
+                float range = vision ? vision.VisionRange : 2f;
+                var tilesEnum = GridManager.Instance.GetTilesInCircle(transform.position, range);
+                var tilesInSight = tilesEnum == null ? null : new List<Tile>(tilesEnum);
+                
+                if (tilesInSight != null && tilesInSight.Count > 0)
+                {
+                    var inSight = new List<Tile>(tilesInSight);
+                    var allResources = FindObjectsOfType<Resource.Resource>();
+                    foreach (var res in allResources)
+                    {
+                        if (res == null || res.Tile == null) continue;
+                        if (!res.Tile.Discovered) continue;
+                        if (!inSight.Contains(res.Tile)) continue;
+                        worldState.RegisterResourceTile(res);
+                    }
+                }
+            }
             
             wasSuccesful = true;
         }

@@ -8,5 +8,17 @@ namespace Goap
     public class GettingWoodAction : BaseGatherAction
     {
         public override ResourceType TargetType => ResourceType.Wood;
+
+        protected override void Awake()
+        {
+            base.Awake();
+
+            if (effects == null || effects.Count == 0)
+                effects = new List<Effect>
+                {
+                    new Effect { kind = EffectKind.ResourceDelta,
+                        resourceType = ResourceType.Wood, amount = amountPerTrip }
+                };
+        }
     }
 }

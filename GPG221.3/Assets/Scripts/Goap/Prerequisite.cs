@@ -3,15 +3,16 @@ using Resource;
 
 namespace Goap
 {
-    public class Prerequisite : MonoBehaviour
-    {
-        public enum Kind { Named, ResourceAmount }
-        public Kind kind = Kind.Named;
+    public enum PrereqKind { Named, ResourceAmount }
 
-        public string effectName;
+    [System.Serializable]
+    public class Prerequisite
+    {
+        public PrereqKind kind = PrereqKind.Named;
+
+        public string name;
 
         public ResourceType resourceType;
-        public int minAmount = 0;
+        public int minAmount;
     }
 }
-
