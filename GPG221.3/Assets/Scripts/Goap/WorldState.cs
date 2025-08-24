@@ -34,7 +34,7 @@ namespace Goap
             if (list == null) return;
             if (!list.Contains(tile)) list.Add(tile);
 
-            EnsureKnownFact(type); // ставим флаг Known_{Type}
+            EnsureKnownFact(type); 
         }
 
         public void RegisterResourceTile(Resource.Resource res)

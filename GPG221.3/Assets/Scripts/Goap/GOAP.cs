@@ -128,10 +128,9 @@ namespace Goap
             {
                 finalPlan = bestPath;
                 StartCoroutine(ExecutePlanCoroutine());
-                return; // критично: не перетирать план разведкой
+                return; 
             }
 
-            // Фолбэк на разведку — ТОЛЬКО если плана нет
             var explore = actions.Find(a => a is ExploreAction);
             if (explore != null)
             {

@@ -49,7 +49,6 @@ namespace Goap
             if (!g || startTile == null)
                 return float.PositiveInfinity;
 
-            // ВАЖНО: не проверяем здесь "have" — на этапе планирования его ещё нет.
             var path = Pathfinder.FindPath(g, startTile, BaseWarehouse.Instance.entryTile);
             return path == null ? float.PositiveInfinity : path.Count;
         }
