@@ -1,16 +1,34 @@
 using Sirenix.OdinInspector;
 using UnityEngine;
 using Resource;
+using Resource;
+using UnityEngine.Serialization;
 
 public class GridGenerator : MonoBehaviour
 {
+    
+    [Header("Grid Settings")]
+    public Vector2Int size;
     public bool resetOnStart;
+    
+    [Header("Tiles")]
     public GameObject tile;
     public GameObject obstacleTile;
-    public GameObject treeTile;
-    public Vector2Int size;
-    public int obstacleChance = 20;
+    
+    [Header("Resources")]
+    public GameObject treePrefab;
+    public GameObject stonePrefab;
+    public GameObject steelPrefab;
+    public GameObject foodPrefab;
+    
+    [Header("Resource Chances")]
     public int treeChance = 2;
+    public int stoneChance = 3;
+    public int steelChance = 1;
+    public int foodChance = 5;
+    
+    
+    
 
     private void Awake()
     {
@@ -32,24 +50,33 @@ public class GridGenerator : MonoBehaviour
         {
             for (int y = -size.y / 2; y < size.y / 2; y++)
             {
-                if (Random.Range(0, 100) < obstacleChance)
+                var t = Instantiate(tile, new Vector3(x, y), Quaternion.identity, transform);
+                t.name = $"Ground";
+
+                GameObject prefab = null;
+                if (Random.Range(0, 100) < treeChance)
                 {
-                    var t = Instantiate(obstacleTile, new Vector3(x, y), Quaternion.identity, transform);
-                    t.name = $"Obstacle";
+                    prefab = treePrefab;
                 }
-                else if (Random.Range(0, 100) < treeChance)
+                else if (Random.Range(0, 100) < stoneChance)
                 {
-                    var t = Instantiate(treeTile, new Vector3(x, y), Quaternion.identity, transform);
-                    t.name = $"Tree";
-                    ResourceManager.Instance.Resources[ResourceType.Wood].Add(t);
-                    // Optionally add a tree content script or component here
+                    prefab = stonePrefab;
                 }
-                else
+                else if (Random.Range(0, 100) < steelChance)
                 {
-                    var t = Instantiate(tile, new Vector3(x, y), Quaternion.identity, transform);
-                    t.name = $"Ground";
+                    prefab = steelPrefab;
                 }
-                    
+                else if (Random.Range(0, 100) < foodChance)
+                {
+                    prefab = foodPrefab;
+                }
+
+                if (prefab != null)
+                {
+                    var instantiatedResource = Instantiate(prefab, new Vector3(x, y), Quaternion.identity, transform);
+                    ResourceManager.Instance.AddResource(instantiatedResource.GetComponent<Resource.Resource>().resourceType, instantiatedResource);
+                }
+
             }
         }
     }

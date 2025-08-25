@@ -25,6 +25,7 @@ namespace Resource
         protected override void Start()
         {
             base.Start();
+            
             OnStockDepleted += RemoveTree;
             
             _stockPile = Random.Range(30,50);

@@ -17,6 +17,11 @@ namespace Resource
         protected override void Start()
         {
             base.Start();
+
+            if (Tile)
+            {
+                transform.position = Tile.transform.position;
+            }
         }
         
         public virtual void ConsumeStock(float amount)
