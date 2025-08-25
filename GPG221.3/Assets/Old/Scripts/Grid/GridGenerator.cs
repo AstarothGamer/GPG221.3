@@ -13,14 +13,12 @@ public class GridGenerator : MonoBehaviour
     
     [Header("Tiles")]
     public GameObject tile;
-    public GameObject obstacleTile;
     
     [Header("Resources")]
     public GameObject treePrefab;
     public GameObject stonePrefab;
     public GameObject steelPrefab;
     public GameObject foodPrefab;
-    public GameObject warehousePrefab;
     
     [Header("Resource Chances")]
     public int treeChance = 2;
@@ -47,7 +45,6 @@ public class GridGenerator : MonoBehaviour
     [Button]
     public void CreateGrid()
     {
-        var house = Instantiate(warehousePrefab, new Vector3(Random.Range(0,5),Random.Range(0,5),0), Quaternion.identity, transform);
         for (int x = -size.x / 2; x < size.x / 2; x++)
         {
             for (int y = -size.y / 2; y < size.y / 2; y++)
