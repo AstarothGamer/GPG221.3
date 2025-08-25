@@ -13,6 +13,8 @@ namespace Resource
         public event Action OnStockAdded;
         public event Action OnStockDepleted;
         public abstract float StockPile { get; protected set; }
+        
+        public static event Action<Tile, ResourceType> OnResourceDepleted;
 
         protected override void Start()
         {
@@ -52,6 +54,7 @@ namespace Resource
         protected virtual void OnStockDepletion()
         {
             OnStockDepleted?.Invoke();
+            OnResourceDepleted?.Invoke(Tile, resourceType);
         }
 
         protected virtual void RaiseOnStockAdded()
