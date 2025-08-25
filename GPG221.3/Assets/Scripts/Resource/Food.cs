@@ -6,7 +6,7 @@ namespace Resource
     {
         public override ResourceType resourceType { get; protected set; } = ResourceType.Food;
         
-        private float _stockPile;
+        [SerializeField] float _stockPile;
         public override float StockPile
         {
             get => _stockPile;

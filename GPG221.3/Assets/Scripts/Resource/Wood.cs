@@ -6,9 +6,9 @@ namespace Resource
 {
     public class Wood : Resource
     {
-        public override ResourceType resourceType { get; protected set; } = ResourceType.Wood;
-        
-        private float _stockPile;
+        [SerializeField] public override ResourceType resourceType { get; protected set; } = ResourceType.Wood;
+
+        [SerializeField] private float _stockPile;
         public override float StockPile
         {
             get => _stockPile;
@@ -28,7 +28,7 @@ namespace Resource
             
             OnStockDepleted += RemoveTree;
             
-            _stockPile = Random.Range(30,50);
+            _stockPile = Random.Range(6,18);
         }
         
         private void RemoveTree()
